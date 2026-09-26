@@ -380,6 +380,24 @@
 
 
 <style>
+  .project-badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    padding: 3px 9px;
+    border-radius: 4px;
+    margin-bottom: 12px;
+    background: rgba(21, 101, 192, 0.08);
+    color: #1565c0;
+    border: 1px solid rgba(21, 101, 192, 0.2);
+  }
+  .dark .project-badge {
+    background: rgba(247, 100, 151, 0.12);
+    color: #f76497;
+    border-color: rgba(247, 100, 151, 0.25);
+  }
   .project-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -1060,10 +1078,13 @@
 
 
 
-<div class="col-12 col-lg-10 mx-auto">
+<div class="col-12 col-lg-11 mx-auto">
   <div class="project-grid">
+
+    <!-- Project 1: Cognitive Paradigms & Digital Behavioral Phenotyping -->
     <div class="project-tile">
       <div>
+        <span class="project-badge">Cognitive Neuroscience & Tools</span>
         <h3>Cognitive Paradigms & Digital Behavioral Phenotyping</h3>
         <p>
           Traditional psychological and cognitive batteries often rely on static laboratory assessments that suffer from limited ecological validity. To bridge the gap between computational theory and behavioral experimentation, I develop gamified cognitive paradigms to capture continuous, high-dimensional behavioral phenotypes across visuospatial memory, phonological working memory, executive function, and motor-cognitive stability.
@@ -1078,6 +1099,140 @@
         </a>
       </div>
     </div>
+
+    <!-- Project 2: Translational Polyimide Neural Interfaces -->
+    <div class="project-tile">
+      <div>
+        <span class="project-badge">Neural Interfaces & Biomaterials</span>
+        <h3>Translational Platform for Polyimide Neural Interfaces</h3>
+        <p>
+          Commercial polyamic acid formulations for thin-film flexible neural interfaces lack clinical biocompatibility approval and surgical customizability. We engineered an open-source, end-to-end translational pipeline for synthesizing medical-grade BPDA–pPDA polyimide microelectrode arrays directly from custom polyamic acid precursors.
+        </p>
+        <p>
+          Evaluated in vivo in epileptic mouse models, these microfabricated probes demonstrate chronic mechanical compliance, low impedance, and high-fidelity local field potential (LFP) recordings across longitudinal seizure monitoring.
+        </p>
+      </div>
+      <div class="project-link-wrapper">
+        <a href="https://doi.org/10.1109/ACCESS.2026.3674701" target="_blank" rel="noopener" class="project-link">
+          View in IEEE Access (DOI: 10.1109/ACCESS.2026.3674701) ↗
+        </a>
+      </div>
+    </div>
+
+    <!-- Project 3: Computational Patch Foraging & Belief Updating -->
+    <div class="project-tile">
+      <div>
+        <span class="project-badge">Computational Decision Making</span>
+        <h3>Patch Foraging & Belief Updating in Dynamic Landscapes</h3>
+        <p>
+          Investigating how humans balance resource exploitation versus exploration in non-stationary, depleting environments under distinct cognitive constraints. Combining behavioral paradigms with reinforcement learning and Bayesian models, this research isolates information-dependent strategy shifts and working memory capacity limits.
+        </p>
+        <p>
+          Extended to clinical dimensions to determine how schizotypal traits and psychiatric dimensions modulate belief updating, volatility priors, and adaptive foraging trajectories under uncertainty.
+        </p>
+      </div>
+      <div class="project-link-wrapper">
+        <span class="project-link" style="cursor: default;">
+          Selected at RLDM (Brown Univ.) & CNLM (UC Irvine) · Submitted
+        </span>
+      </div>
+    </div>
+
+    <!-- Project 4: Wrist-Wearable Seizure Prediction Algorithm -->
+    <div class="project-tile">
+      <div>
+        <span class="project-badge">Digital Health & Wearables</span>
+        <h3>Wrist-Wearable Epileptic Seizure Prediction Algorithm</h3>
+        <p>
+          Developing non-invasive forecasting algorithms for wrist-wearable physiological devices to anticipate epileptic seizure onset. The algorithm monitors systemic state transitions using excitation–inhibition (E/I) balance metrics integrated with peripheral autonomic biosignals, including ECG and EMG.
+        </p>
+        <p>
+          Correlating dynamic pre-ictal and post-ictal electrophysiological signatures with circadian rhythms and sleep architecture establishes robust early-warning windows for ambulatory seizure management.
+        </p>
+      </div>
+      <div class="project-link-wrapper">
+        <span class="project-link" style="cursor: default;">
+          Preclinical Development · IIT Kanpur
+        </span>
+      </div>
+    </div>
+
+    <!-- Project 5: Commutable Coaxial Micro-Macro DBS Electrodes -->
+    <div class="project-tile">
+      <div>
+        <span class="project-badge">Surgical Devices & DBS</span>
+        <h3>Commutable Coaxial Micro-Macro Electrodes for Human MER</h3>
+        <p>
+          Deep brain stimulation (DBS) neurosurgery typically requires exchanging microelectrodes (for microelectrode recording / MER target localization) with separate macro-stimulation leads. We engineered a commutable coaxial electrode architecture combining cellular single-unit recording and macro-stimulation on a unified surgical shank.
+        </p>
+        <p>
+          Preclinically validated in rodent stereotaxic models to demonstrate cellular resolution electrophysiology, minimal parenchymal tissue displacement, and rapid commutability for neurosurgical translation.
+        </p>
+      </div>
+      <div class="project-link-wrapper">
+        <span class="project-link" style="cursor: default;">
+          Preclinical Rodent Evaluation · Pre-submission
+        </span>
+      </div>
+    </div>
+
+    <!-- Project 6: Automated Operant Conditioning & Drug Delivery Chamber -->
+    <div class="project-tile">
+      <div>
+        <span class="project-badge">Open Hardware & Instrumentation</span>
+        <h3>Automated Operant Conditioning & Drug Delivery Chamber</h3>
+        <p>
+          Commercial operant conditioning systems impose high costs and closed software ecosystems that hinder scalable rodent behavioral experiments. Designed and fabricated an open-hardware, low-cost modular operant chamber for mice featuring automated pellet dispensers, optical lickometers, and precision pharmacological micro-infusion.
+        </p>
+        <p>
+          Fully integrated with Bonsai and Python microcontrollers for high-temporal-precision reinforcement learning, reward delivery, and state-dependent behavioral tracking.
+        </p>
+      </div>
+      <div class="project-link-wrapper">
+        <span class="project-link" style="cursor: default;">
+          Indian Patent Filed (Filing No. 202611063181)
+        </span>
+      </div>
+    </div>
+
+    <!-- Project 7: Aperiodic EEG Dynamics & E/I Balance -->
+    <div class="project-tile">
+      <div>
+        <span class="project-badge">Electrophysiology & Epilepsy</span>
+        <h3>Aperiodic EEG Dynamics & E/I Balance in Chronic Epilepsy</h3>
+        <p>
+          Evaluated whether 1/f scale-free aperiodic EEG spectral slopes index cortical excitation-inhibition (E/I) balance across progressive network reorganization in chronic epilepsy. Using a genetic mouse model of Lafora disease (Epm2a−/−), aperiodic exponents were tracked across resting wakefulness, anesthesia, and PTZ-induced seizures.
+        </p>
+        <p>
+          Demonstrated that epileptic networks exhibit systematically steeper aperiodic spectral slopes, validating aperiodic activity as an electrophysiological biomarker of network reorganization and cortical hyperexcitability.
+        </p>
+      </div>
+      <div class="project-link-wrapper">
+        <a href="https://doi.org/10.1101/2024.08.20.608753" target="_blank" rel="noopener" class="project-link">
+          View Preprint on bioRxiv ↗
+        </a>
+      </div>
+    </div>
+
+    <!-- Project 8: ML Biomarkers Across Psychosis Spectrum -->
+    <div class="project-tile">
+      <div>
+        <span class="project-badge">Machine Learning & Psychiatry</span>
+        <h3>Multimodal Machine Learning Biomarkers Across Psychosis</h3>
+        <p>
+          Collaborative computational research with the Computational Psychopathology Group (Harvard Medical School / McLean Hospital) evaluating machine learning pipelines for early biomarker discovery across schizophrenia, schizoaffective, and high-risk clinical populations.
+        </p>
+        <p>
+          Leveraged high-dimensional datasets spanning cognitive battery performance, structural/functional MRI neuroimaging, and EEG/ERP electrophysiology to improve diagnostic precision and treatment stratification.
+        </p>
+      </div>
+      <div class="project-link-wrapper">
+        <a href="https://doi.org/10.1016/j.bionps.2024.100107" target="_blank" rel="noopener" class="project-link">
+          Published in Biomarkers in Neuropsychiatry (Elsevier) ↗
+        </a>
+      </div>
+    </div>
+
   </div>
 </div></div>
   
