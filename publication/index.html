@@ -1008,12 +1008,11 @@ function loadContent(tab) {
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, 'text/html');
       
-      // Find all isotope-item divs that contain links to the SPECIFIC publication type
-      let items = Array.from(doc.querySelectorAll('.isotope-item')).filter(item => {
-        const link = item.querySelector('a[href*="/publication/"]');
-        // Only keep items that link to the correct subdirectory
-        return link && link.getAttribute('href').includes(targetPath);
-      });
+      // Find all isotope-item divs that contain a publication stream item
+      let items = Array.from(doc.querySelectorAll('#container-publications .isotope-item, .projects-container .isotope-item'));
+      if (items.length === 0) {
+        items = Array.from(doc.querySelectorAll('.isotope-item')).filter(item => item.querySelector('.stream-item'));
+      }
       
       if (items.length > 0) {
         let html = '';
