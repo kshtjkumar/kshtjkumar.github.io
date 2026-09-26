@@ -214,7 +214,7 @@
   
   
   
-  <link rel="stylesheet" href="/css/wowchemy.css" />
+  <link rel="stylesheet" href="/css/wowchemy.css?v=20260926_fix" />
 
   
   
@@ -1462,6 +1462,23 @@
 
 
 
+
+
+<script>
+  // Instant click guarantee for all play buttons and game titles
+  document.addEventListener('DOMContentLoaded', function() {
+    var links = document.querySelectorAll('.btn-play-game, .article-title a');
+    for (var i = 0; i < links.length; i++) {
+      links[i].addEventListener('click', function(e) {
+        var href = this.getAttribute('href');
+        if (href) {
+          window.open(href, '_blank');
+          e.preventDefault();
+        }
+      });
+    }
+  });
+</script>
 
 </body>
 </html>
