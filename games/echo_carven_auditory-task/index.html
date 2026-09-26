@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Echo Cavern: Auditory WM Task</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #0f0f10;
+            color: #e2e8f0;
+            font-family: 'Nunito', sans-serif;
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+        }
+        .spooky-font { font-family: 'Creepster', cursive; }
+
+        /* SCENES */
+        .scene {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+            opacity: 0; pointer-events: none; z-index: 10;
+        }
+        .visible { opacity: 1; pointer-events: auto; transform: scale(1); }
+        
+        /* Success Animation */
+        #scene-success.visible { animation: popSuccess 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes popSuccess {
+            0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; }
+        }
+
+        #game-canvas { position: absolute; inset: 0; z-index: 1; }
+        
+        .overlay-msg {
+            background: rgba(0, 0, 0, 0.95); padding: 2rem; border-radius: 1rem;
+            border: 2px solid #a855f7; text-align: center; max-width: 90%;
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+        }
+
+        /* CONTROLS */
+        #mobile-controls {
+            position: absolute; bottom: 30px; width: 100%;
+            display: flex; justify-content: center; gap: 30px;
+            z-index: 20; display: none; transition: opacity 0.3s;
+        }
+        #mobile-controls.locked { opacity: 0.3; pointer-events: none; }
+
+        .arrow-btn {
+            width: 80px; height: 80px; background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;
+            font-size: 2rem; color: white;
+            display: flex; align-items: center; justify-content: center;
+            backdrop-filter: blur(4px); transition: all 0.1s;
+        }
+        .arrow-btn:active { background: rgba(74, 222, 128, 0.3); border-color: #4ade80; transform: scale(0.9); }
+        .arrow-btn.disabled { opacity: 0.1 !important; pointer-events: none !important; border-color: #333 !important; color: #333 !important; }
+
+        .mode-toggle { display: flex; background: #1f2937; padding: 4px; border-radius: 8px; margin-bottom: 1rem; }
+        .mode-btn { padding: 8px 16px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; color: #9ca3af; flex: 1; transition: all 0.2s; }
+        .mode-btn.active { background: #a855f7; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+
+        /* Result Grid */
+        .result-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #333; }
+        .result-label { color: #9ca3af; font-size: 0.8rem; }
+        .result-val { color: white; font-weight: bold; font-family: monospace; }
+    </style>
+</head>
+<body>
+
+    <canvas id="game-canvas"></canvas>
+
+    <!-- CONTROLS -->
+    <div id="mobile-controls" class="locked">
+        <button class="arrow-btn" onpointerdown="game.handleInput('left')">⬅️</button>
+        <button class="arrow-btn" id="btn-center" onpointerdown="game.handleInput('center')">⬆️</button>
+        <button class="arrow-btn" onpointerdown="game.handleInput('right')">➡️</button>
+    </div>
+
+    <!-- SCENE 1: INTRO -->
+    <div id="scene-intro" class="scene visible bg-black">
+        <div class="overlay-msg">
+            <h1 class="text-5xl spooky-font text-purple-400 mb-2">ECHO CAVERN</h1>
+            <p class="text-gray-400 mb-6">Audio Working Memory Task</p>
+            
+            <div class="bg-gray-800 p-4 rounded-lg mb-6 text-left text-sm border border-gray-700">
+                <div class="flex justify-between items-center mb-2">
+                     <p class="font-bold text-white">🧠 MODE SELECTION</p>
+                </div>
+                <div class="mode-toggle">
+                    <button class="mode-btn active" id="mode-fwd" onclick="game.setRecallMode('forward')">FORWARD (STM)</button>
+                    <button class="mode-btn" id="mode-rev" onclick="game.setRecallMode('reverse')">REVERSE (WM)</button>
+                </div>
+                <p class="text-xs text-gray-400 mb-2 italic" id="mode-desc">Listen, then repeat exactly.</p>
+
+                <p class="mb-2 text-center text-gray-400 text-xs">Audio Check:</p>
+                <div class="flex gap-2 justify-center">
+                    <button onclick="audio.test('left')" class="px-3 py-1 bg-gray-700 rounded hover:bg-blue-600 text-xs">Left</button>
+                    <button onclick="audio.test('center')" class="px-3 py-1 bg-gray-700 rounded hover:bg-green-600 text-xs">Center</button>
+                    <button onclick="audio.test('right')" class="px-3 py-1 bg-gray-700 rounded hover:bg-red-600 text-xs">Right</button>
+                </div>
+            </div>
+
+            <p class="text-xs text-gray-500 uppercase tracking-widest mb-2">Start Game</p>
+            <div class="flex gap-4 justify-center">
+                <button onclick="game.init('6-8')" class="px-6 py-3 bg-purple-700 hover:bg-purple-600 rounded-lg font-bold text-white shadow-lg hover:scale-105 transition">Junior</button>
+                <button onclick="game.init('9-12')" class="px-6 py-3 bg-indigo-700 hover:bg-indigo-600 rounded-lg font-bold text-white shadow-lg hover:scale-105 transition">Pro</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCENE 2: PLAYING -->
+    <div id="scene-listen" class="scene">
+        <div class="text-center">
+            <div class="text-6xl mb-4 animate-bounce">🦇</div>
+            <h2 class="text-4xl spooky-font text-green-400 tracking-wider">LISTEN...</h2>
+            <p class="text-green-200/50 mt-2 text-sm font-mono">Memorize the Audio Path</p>
+        </div>
+    </div>
+
+    <div id="scene-reverse" class="scene">
+        <div class="text-center">
+            <div class="text-6xl mb-4 animate-spin">🔄</div>
+            <h2 class="text-4xl spooky-font text-orange-400 tracking-wider">ESCAPE!</h2>
+            <p class="text-orange-200 mt-2 font-bold text-xl">REVERSE THE ORDER</p>
+            <p class="text-orange-200/50 text-sm">(Start from the LAST sound)</p>
+        </div>
+    </div>
+
+    <div id="scene-success" class="scene">
+        <div class="text-center">
+            <div class="text-6xl mb-2">✨</div>
+            <h2 class="text-5xl spooky-font text-yellow-400 tracking-wider drop-shadow-lg">COMPLETE!</h2>
+        </div>
+    </div>
+
+    <div id="scene-hud" class="scene !justify-start !items-stretch p-6 pointer-events-none">
+        <div class="flex justify-between items-start w-full">
+            <div class="text-left bg-black/40 p-2 rounded backdrop-blur-sm">
+                <div class="text-xs text-purple-300 font-bold">DEPTH</div>
+                <div id="ui-level" class="text-3xl font-mono font-bold text-white">1</div>
+            </div>
+            <div class="text-center mt-2">
+                <div id="ui-mode" class="text-[10px] font-bold bg-gray-800 px-3 py-1 rounded-full text-gray-400 border border-gray-600">FORWARD</div>
+            </div>
+            <div class="text-right bg-black/40 p-2 rounded backdrop-blur-sm">
+                <div class="text-xs text-green-300 font-bold">SCORE</div>
+                <div id="ui-score" class="text-3xl font-mono font-bold text-white">0</div>
+            </div>
+        </div>
+        <div id="ui-lives" class="absolute bottom-6 right-6 text-3xl drop-shadow-lg">❤️❤️❤️</div>
+    </div>
+
+    <!-- SCENE 4: OVER -->
+    <div id="scene-over" class="scene bg-black/90">
+        <div class="overlay-msg border-red-500">
+            <h2 class="text-4xl spooky-font text-red-500 mb-4">LOST</h2>
+            
+            <div class="bg-gray-900 p-4 rounded mb-4 text-left">
+                <p class="text-xs text-red-400 font-bold mb-2 uppercase">Sequence Report:</p>
+                <div class="text-sm font-mono text-gray-300 mb-1 break-words">👂 Heard: <span id="log-seq" class="text-white">...</span></div>
+                <div class="text-sm font-mono text-green-400 mb-1 break-words">✅ Correct: <span id="log-expected">...</span></div>
+                <div class="text-sm font-mono text-red-400 break-words">❌ You: <span id="log-input">...</span></div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-left mb-4 font-mono text-sm bg-black/50 p-2 rounded">
+                <div class="result-row"><span class="result-label">Mode</span><span class="result-val" id="end-mode">FWD</span></div>
+                <div class="result-row"><span class="result-label">Depth</span><span class="result-val" id="end-level">1</span></div>
+                <div class="result-row"><span class="result-label">Score</span><span class="result-val" id="end-score">0</span></div>
+                <div class="result-row border-none"><span class="result-label">Accuracy</span><span class="result-val text-green-400" id="end-acc">0%</span></div>
+            </div>
+            
+            <button onclick="game.reset()" class="w-full py-3 bg-white text-black font-bold rounded hover:bg-gray-200 mb-3 transition">Try Again</button>
+            <button onclick="dataManager.download()" class="text-xs text-gray-500 underline hover:text-white">Save Data</button>
+        </div>
+    </div>
+
+    <script>
+        // --- AUDIO ---
+        const audio = {
+            ctx: null,
+            init() { if(!this.ctx) { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } if(this.ctx.state === 'suspended') { this.ctx.resume(); } },
+            playTone(pan, pitch) {
+                if(!this.ctx) this.init();
+                const t = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                const panner = this.ctx.createStereoPanner();
+                osc.type = 'sine'; osc.frequency.setValueAtTime(pitch, t);
+                panner.pan.setValueAtTime(pan, t);
+                gain.gain.setValueAtTime(0, t);
+                gain.gain.linearRampToValueAtTime(0.2, t+0.05);
+                gain.gain.exponentialRampToValueAtTime(0.001, t+0.3);
+                osc.connect(gain); gain.connect(panner); panner.connect(this.ctx.destination);
+                osc.start(t); osc.stop(t+0.3);
+            },
+            test(dir) { this.init(); if(dir==='left') this.playTone(-1, 880); if(dir==='center') this.playTone(0, 440); if(dir==='right') this.playTone(1, 220); },
+            playCue(dir) { 
+                if(dir==='left') this.playTone(-1, 880); 
+                if(dir==='center') this.playTone(0, 440); 
+                if(dir==='right') this.playTone(1, 220); 
+            },
+            playSuccess() { this.playTone(0, 600); },
+            playLevelComplete() { this.playTone(0, 523); setTimeout(()=>this.playTone(0, 659), 100); setTimeout(()=>this.playTone(0, 783), 200); },
+            playError() { 
+                const t = this.ctx.currentTime; const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
+                osc.type='sawtooth'; osc.frequency.setValueAtTime(100, t);
+                gain.gain.setValueAtTime(0.2, t); gain.gain.exponentialRampToValueAtTime(0.01, t+0.5);
+                osc.connect(gain); gain.connect(this.ctx.destination); osc.start(t); osc.stop(t+0.5);
+            }
+        };
+
+        // --- VISUALS ---
+        const visuals = {
+            canvas: document.getElementById('game-canvas'),
+            ctx: document.getElementById('game-canvas').getContext('2d'),
+            width: 0, height: 0,
+            bat: { x: 0.5, y: 0.8, targetX: 0.5 },
+
+            resize() {
+                this.width = this.canvas.width = window.innerWidth;
+                this.height = this.canvas.height = window.innerHeight;
+                this.bat.x = this.width / 2; this.bat.y = this.height * 0.8; this.bat.targetX = this.width / 2;
+            },
+            start() { if(!this.animId) this.loop(); },
+            loop() {
+                this.bat.x += (this.bat.targetX - this.bat.x) * 0.15;
+                this.draw();
+                this.animId = requestAnimationFrame(() => this.loop());
+            },
+            draw() {
+                const w = this.width, h = this.height, ctx = this.ctx;
+                ctx.fillStyle = '#050505'; ctx.fillRect(0, 0, w, h);
+                const tunnels = [{x: w*0.2}, {x: w*0.5}, {x: w*0.8}];
+                tunnels.forEach(t => {
+                    const grad = ctx.createRadialGradient(t.x, h*0.4, 10, t.x, h*0.4, 120);
+                    grad.addColorStop(0, '#111'); grad.addColorStop(1, '#000');
+                    ctx.beginPath(); ctx.ellipse(t.x, h*0.4, 60, 100, 0, 0, Math.PI * 2);
+                    ctx.fillStyle = grad; ctx.fill();
+                    ctx.strokeStyle = '#222'; ctx.lineWidth = 4; ctx.stroke();
+                });
+                const bx = this.bat.x, by = this.bat.y;
+                ctx.fillStyle = '#7c3aed'; ctx.beginPath();
+                const flap = Math.sin(Date.now()/100) * 15;
+                ctx.moveTo(bx, by); ctx.quadraticCurveTo(bx-60, by-40+flap, bx-20, by+20);
+                ctx.lineTo(bx, by); ctx.quadraticCurveTo(bx+60, by-40+flap, bx+20, by+20);
+                ctx.fill();
+                ctx.fillStyle = '#a78bfa'; ctx.beginPath(); ctx.arc(bx, by, 15, 0, Math.PI*2); ctx.fill();
+            }
+        };
+
+        // --- GAME ---
+        const game = {
+            state: { level: 1, score: 0, lives: 3, age: '6-8', recallMode: 'forward', sequence: [], playerInput: [], phase: 'intro', stats: {hits:0, errors:0} },
+            timeouts: [],
+            inputLock: false, // Debounce flag
+
+            setRecallMode(mode) {
+                if(this.state.phase !== 'intro') return;
+                this.state.recallMode = mode;
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                document.getElementById(mode === 'forward' ? 'mode-fwd' : 'mode-rev').classList.add('active');
+                
+                const desc = document.getElementById('mode-desc');
+                desc.innerText = mode === 'forward' 
+                    ? "Listen to the sequence, repeat it exactly." 
+                    : "Listen to the sequence, then REVERSE order (Last heard = First pressed).";
+            },
+
+            init(age) {
+                this.state.age = age;
+                audio.init();
+                if('ontouchstart' in window || navigator.maxTouchPoints > 0) document.getElementById('mobile-controls').style.display = 'flex';
+                this.state.level = 1; this.state.score = 0; this.state.lives = 3; this.state.stats = {hits:0, errors:0};
+                
+                const lbl = document.getElementById('ui-mode');
+                lbl.innerText = this.state.recallMode === 'forward' ? 'FORWARD' : 'REVERSE';
+                lbl.className = this.state.recallMode === 'forward' ? "text-[10px] font-bold bg-blue-900 px-3 py-1 rounded-full text-blue-200 border border-blue-600" : "text-[10px] font-bold bg-orange-900 px-3 py-1 rounded-full text-orange-200 border border-orange-600";
+
+                visuals.resize(); visuals.start();
+                this.startLevel();
+            },
+
+            startLevel() {
+                this.clearTimers();
+                this.state.sequence = []; this.state.playerInput = [];
+                this.state.phase = 'listen';
+                this.setScene('listen');
+                this.lockControls(true);
+                this.updateHUD();
+
+                const dirs = this.state.recallMode === 'reverse' ? ['left', 'right'] : ['left', 'center', 'right'];
+                
+                const cBtn = document.getElementById('btn-center');
+                if(cBtn) {
+                    if(this.state.recallMode === 'reverse') cBtn.classList.add('disabled');
+                    else cBtn.classList.remove('disabled');
+                }
+
+                const len = Math.min(2 + Math.floor(this.state.level/2), 6);
+                for(let i=0; i<len; i++) this.state.sequence.push(dirs[Math.floor(Math.random()*dirs.length)]);
+
+                if (this.state.recallMode === 'reverse' && len > 1) {
+                    let safety = 0;
+                    while (JSON.stringify(this.state.sequence) === JSON.stringify([...this.state.sequence].reverse()) && safety < 50) {
+                        const last = this.state.sequence[len-1];
+                        const newOpt = dirs.filter(d => d !== last)[0]; 
+                        this.state.sequence[len-1] = newOpt;
+                        safety++;
+                    }
+                }
+
+                const runSeq = async () => {
+                    await this.wait(1000);
+                    for(let dir of this.state.sequence) {
+                        if(this.state.phase !== 'listen') return;
+                        audio.playCue(dir);
+                        await this.wait(1000);
+                    }
+                    if(this.state.phase === 'listen') {
+                        if(this.state.recallMode === 'reverse') {
+                            this.setScene('reverse');
+                            await this.wait(1500);
+                        }
+                        this.state.phase = 'move';
+                        this.setScene('hud');
+                        this.lockControls(false);
+                        visuals.bat.targetX = visuals.width/2;
+                    }
+                };
+                runSeq();
+            },
+
+            handleInput(dir) {
+                if(this.state.phase !== 'move') return;
+                if(this.inputLock) return; // Debounce
+                this.inputLock = true;
+                setTimeout(() => this.inputLock = false, 200); // 200ms debounce
+
+                if(dir === 'center' && this.state.recallMode === 'reverse') return;
+                if(!this.state.sequence || this.state.sequence.length === 0) return;
+
+                const w = visuals.width;
+                if(dir === 'left') visuals.bat.targetX = w*0.2;
+                if(dir === 'center') visuals.bat.targetX = w*0.5;
+                if(dir === 'right') visuals.bat.targetX = w*0.8;
+
+                const step = this.state.playerInput.length;
+                let expected;
+                if(this.state.recallMode === 'forward') {
+                    expected = this.state.sequence[step];
+                } else {
+                    expected = this.state.sequence[this.state.sequence.length - 1 - step];
+                }
+
+                if(dir === expected) {
+                    this.state.playerInput.push(dir);
+                    if(this.state.playerInput.length === this.state.sequence.length) {
+                        audio.playLevelComplete();
+                        this.state.phase = 'transition';
+                        this.lockControls(true);
+                        document.getElementById('scene-success').classList.add('visible');
+                        const mult = this.state.recallMode === 'reverse' ? 200 : 100;
+                        this.state.score += mult * this.state.sequence.length;
+                        this.state.stats.hits++;
+                        this.state.level++;
+                        this.wait(1500).then(() => {
+                            document.getElementById('scene-success').classList.remove('visible');
+                            this.startLevel();
+                        });
+                    } else {
+                        audio.playSuccess();
+                    }
+                } else {
+                    audio.playError();
+                    this.state.lives--; this.state.stats.errors++; this.updateHUD();
+                    document.body.style.transform = "translateX(10px)";
+                    this.wait(100).then(() => document.body.style.transform = "none");
+                    
+                    // Build Debug Info
+                    const iconMap = { 'left': '⬅️', 'right': '➡️', 'center': '⬆️' };
+                    let expectedSeq = [];
+                    if(this.state.recallMode === 'forward') expectedSeq = this.state.sequence;
+                    else expectedSeq = [...this.state.sequence].reverse();
+                    
+                    this.lastFail = { 
+                        seqStr: this.state.sequence.map(d => iconMap[d]).join(' '),
+                        correctStr: expectedSeq.map(d => iconMap[d]).join(' '),
+                        inputStr: [...this.state.playerInput, dir].map(d => iconMap[d]).join(' ')
+                    };
+
+                    if(this.state.lives <= 0) this.gameOver();
+                    else {
+                        this.state.phase = 'transition';
+                        this.lockControls(true);
+                        this.wait(1000).then(() => this.startLevel());
+                    }
+                }
+                document.getElementById('ui-lives').innerText = '❤️'.repeat(Math.max(0, this.state.lives));
+            },
+
+            lockControls(locked) {
+                const el = document.getElementById('mobile-controls');
+                if(locked) el.classList.add('locked'); else el.classList.remove('locked');
+            },
+            updateHUD() {
+                document.getElementById('ui-level').innerText = this.state.level;
+                document.getElementById('ui-score').innerText = this.state.score;
+                document.getElementById('ui-lives').innerText = '❤️'.repeat(Math.max(0, this.state.lives));
+            },
+            setScene(id) {
+                document.querySelectorAll('.scene').forEach(el => el.classList.remove('visible'));
+                document.getElementById(`scene-${id}`).classList.add('visible');
+            },
+            gameOver() {
+                this.state.phase = 'over'; this.setScene('over'); this.lockControls(true);
+                const total = this.state.stats.hits + this.state.stats.errors;
+                const acc = total ? Math.round((this.state.stats.hits/total)*100) : 0;
+                document.getElementById('end-mode').innerText = this.state.recallMode === 'forward' ? 'FWD' : 'REV';
+                document.getElementById('end-level').innerText = this.state.level;
+                document.getElementById('end-score').innerText = this.state.score;
+                document.getElementById('end-acc').innerText = acc + '%';
+                
+                if(this.lastFail) {
+                    document.getElementById('log-seq').innerText = this.lastFail.seqStr;
+                    document.getElementById('log-expected').innerText = this.lastFail.correctStr;
+                    document.getElementById('log-input').innerText = this.lastFail.inputStr;
+                }
+                
+                dataManager.log({age: this.state.age, mode: this.state.recallMode, maxLevel: this.state.level, score: this.state.score, accuracy: acc});
+            },
+            reset() { 
+                this.clearTimers(); 
+                this.state.phase = 'intro'; 
+                this.setScene('intro'); 
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('locked'));
+            },
+            wait(ms) { return new Promise(resolve => { const id = setTimeout(resolve, ms); this.timeouts.push(id); }); },
+            clearTimers() { this.timeouts.forEach(clearTimeout); this.timeouts = []; }
+        };
+
+        window.addEventListener('keydown', e => {
+            if(!game || game.state.phase !== 'move') return;
+            if(e.key === 'ArrowLeft') game.handleInput('left');
+            if(e.key === 'ArrowRight') game.handleInput('right');
+            if(e.key === 'ArrowUp' && game.state.recallMode === 'forward') game.handleInput('center');
+        });
+        window.addEventListener('resize', () => visuals.resize());
+
+        const dataManager = {
+            logs: [],
+            log(data) { this.logs.push({timestamp: new Date().toISOString(), ...data}); },
+            download() {
+                const blob = new Blob([JSON.stringify(this.logs, null, 2)], {type : 'application/json'});
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob); a.download = 'echo_cavern_data.json'; a.click();
+            }
+        };
+    </script>
+<!-- Google Sheets Data Collection -->
+<script>
+class GameDataCollector {
+  constructor(options = {}) {
+    this.webAppUrl = options.webAppUrl || "https://script.google.com/macros/s/AKfycbxiuQOpLc6jz6MlwCk3ZhQslpKmc83ozbkOHC5zueS3Q504UbJcGAAs3PwRhNjGfLhY/exec";
+    this.gameName = options.gameName || 'Unknown Game';
+    this.allowAnonymous = options.allowAnonymous !== false;
+    this.debug = options.debug || false;
+  }
+  
+  getPlayerId() {
+    if (!this.allowAnonymous) return 'anonymous';
+    let playerId = localStorage.getItem('iqualia_player_id');
+    if (!playerId) {
+      playerId = 'player_' + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem('iqualia_player_id', playerId);
+    }
+    return playerId;
+  }
+  
+  getDeviceInfo() {
+    const ua = navigator.userAgent;
+    let device = 'Desktop';
+    if (/iPhone|iPad|iPod/.test(ua)) device = 'Mobile-iOS';
+    else if (/Android/.test(ua)) device = 'Mobile-Android';
+    
+    let browser = 'Other';
+    if (/Chrome/.test(ua) && !/Chromium/.test(ua)) browser = 'Chrome';
+    else if (/Safari/.test(ua)) browser = 'Safari';
+    else if (/Firefox/.test(ua)) browser = 'Firefox';
+    else if (/Edge/.test(ua)) browser = 'Edge';
+    
+    return {device, browser};
+  }
+  
+  async submitGameData(gameData) {
+    try {
+      const formData = new FormData();
+      formData.append('timestamp', new Date().toISOString());
+      formData.append('game_name', this.gameName);
+      formData.append('player_id', this.getPlayerId());
+      formData.append('score', gameData.score || 0);
+      formData.append('time_spent', gameData.time_spent || 0);
+      formData.append('attempts', gameData.attempts || 0);
+      formData.append('result', gameData.result || 'completed');
+      formData.append('device', this.getDeviceInfo().device);
+      
+      if (this.debug) console.log('Submitting FormData');
+      
+      const response = await fetch(this.webAppUrl, {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (this.debug) console.log('✓ Data submitted successfully');
+      return {success: true};
+    } catch (e) {
+      console.error('Data submission error:', e);
+      return {success: false, error: e.message};
+    }
+  }
+}
+
+// Initialize collector for this game
+const gameCollector = new GameDataCollector({
+  gameName: document.title || 'Game',
+  debug: false
+});
+
+// Log when page loads
+if (gameCollector.debug) {
+  console.log('Data collector ready for:', gameCollector.gameName);
+  console.log('Web App URL:', gameCollector.webAppUrl);
+}
+</script>
+
+</body>
+</html>
