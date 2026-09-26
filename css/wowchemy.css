@@ -9906,28 +9906,15 @@ button.btn-primary.focus,
   color: #333 !important; }
 
 /* Make activity/talk titles non-clickable when external links are provided */
-.page-title {
-  pointer-events: none !important;
-  cursor: default !important; }
+.page-title{pointer-events:auto!important;cursor:pointer!important;}
 
-.page-title a {
-  color: inherit !important;
-  text-decoration: none !important;
-  pointer-events: none !important; }
+.page-title a{pointer-events:auto!important;cursor:pointer!important;}
 
 /* Remove clickability from article titles in talks list */
-.article-title a {
-  pointer-events: none !important;
-  cursor: default !important;
-  color: inherit !important;
-  text-decoration: none !important; }
+.article-title a{pointer-events:auto!important;cursor:pointer!important;color:#1565c0!important;}
 
 /* Remove clickability from article summaries in talks list */
-.summary-link {
-  pointer-events: none !important;
-  cursor: default !important;
-  color: inherit !important;
-  text-decoration: none !important; }
+.summary-link{pointer-events:auto!important;cursor:pointer!important;}
 
 .summary-link:hover {
   text-decoration: none !important;
