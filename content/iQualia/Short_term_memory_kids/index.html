@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>StorySack: River Catch</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- CORE SETTINGS --- */
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #0f172a;
+            color: #fff;
+            overflow: hidden;
+            touch-action: none; /* Critical for game feel on mobile */
+            user-select: none;
+            cursor: default; 
+        }
+        
+        /* Cursor States */
+        body.game-active { cursor: none; } /* Hide system mouse during play */
+        
+        .title-font { font-family: 'Fredoka One', cursive; }
+        .text-stroke { -webkit-text-stroke: 1px rgba(0,0,0,0.3); }
+        
+        /* --- SCENES --- */
+        .scene {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.5s ease-out;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .visible-scene { opacity: 1; pointer-events: auto; transform: scale(1); }
+        .hidden-scene { opacity: 0; transform: scale(1.1); filter: blur(8px); }
+
+        /* Success Overlay Animation */
+        #scene-success.visible-scene {
+            animation: popSuccess 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 50; /* Above everything */
+            background: rgba(0,0,0,0.4); /* Slight dim */
+            backdrop-filter: blur(4px);
+        }
+        @keyframes popSuccess {
+            0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* --- RIVER BACKGROUND --- */
+        .river-bg {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, #38bdf8 0%, #0284c7 40%, #0c4a6e 100%);
+            z-index: 0;
+            overflow: hidden;
+        }
+        .light-shafts {
+            position: absolute;
+            top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.15) 0%, transparent 60%);
+            animation: rotateLight 30s linear infinite;
+            pointer-events: none;
+        }
+        @keyframes rotateLight { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .wave-layer {
+            position: absolute;
+            width: 200%;
+            height: 100%;
+            background-repeat: repeat-x;
+            background-position: 0 bottom;
+            transform-origin: center bottom;
+        }
+        .wave-1 {
+            bottom: 0; height: 120px; z-index: 1;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%237dd3fc' fill-opacity='0.2' d='M0,160L48,176C96,192,192,224,288,224C384,224,480,192,576,165.3C672,139,768,117,864,128C960,139,1056,181,1152,197.3C1248,213,1344,203,1392,197.3L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E");
+            animation: waveFlow 15s linear infinite;
+        }
+        .wave-2 {
+            bottom: -20px; height: 150px; z-index: 2;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%2338bdf8' fill-opacity='0.2' d='M0,64L48,80C96,96,192,128,288,128C384,128,480,96,576,106.7C672,117,768,171,864,186.7C960,203,1056,181,1152,160C1248,139,1344,117,1392,106.7L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E");
+            animation: waveFlow 20s linear infinite reverse;
+        }
+        @keyframes waveFlow { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+        /* --- ITEMS --- */
+        .floater {
+            position: absolute;
+            font-size: 4.5rem;
+            filter: drop-shadow(0 8px 8px rgba(0,0,0,0.3));
+            cursor: none;
+            will-change: transform;
+            z-index: 5;
+            transition: filter 0.3s;
+        }
+        .caught-anim { animation: caught 0.5s forwards cubic-bezier(0.34, 1.56, 0.64, 1); }
+        @keyframes caught {
+            0% { transform: scale(1) rotate(0deg); opacity: 1; }
+            50% { transform: scale(1.4) rotate(180deg); opacity: 0.8; filter: brightness(2); }
+            100% { transform: scale(0) rotate(360deg); opacity: 0; }
+        }
+
+        /* --- NET CURSOR --- */
+        #net-cursor {
+            position: fixed;
+            width: 120px; height: 120px;
+            pointer-events: none;
+            z-index: 100;
+            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.3));
+            transform-origin: 70% 70%;
+            transition: transform 0.05s ease-out, opacity 0.3s;
+            opacity: 0; /* Hidden by default */
+        }
+        #net-cursor.visible { opacity: 1; }
+        
+        .net-svg { width: 100%; height: 100%; fill: none; stroke: #f1f5f9; stroke-width: 3; stroke-linecap: round; }
+        
+        .swinging { animation: swing 0.4s ease-out; }
+        @keyframes swing {
+            0% { transform: rotate(0deg); }
+            40% { transform: rotate(-45deg) scale(1.1); }
+            100% { transform: rotate(0deg); }
+        }
+
+        .ripple {
+            position: absolute;
+            width: 20px; height: 20px;
+            border: 3px solid rgba(255,255,255,0.5);
+            border-radius: 50%;
+            animation: rippleFade 0.6s ease-out forwards;
+            pointer-events: none;
+        }
+        @keyframes rippleFade { 0% { transform: scale(0.5); opacity: 0.8; } 100% { transform: scale(3); opacity: 0; } }
+
+        .bubble-particle {
+            position: absolute; background: white; border-radius: 50%; pointer-events: none;
+            animation: bubbleRise 1s ease-out forwards;
+        }
+        @keyframes bubbleRise {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-80px) scale(0); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- RIVER LAYERS -->
+    <div class="river-bg">
+        <div class="light-shafts"></div>
+        <div class="wave-layer wave-1"></div>
+        <div class="wave-layer wave-2"></div>
+    </div>
+    <div id="ripple-layer" class="absolute inset-0 overflow-hidden pointer-events-none z-50"></div>
+
+    <!-- NET -->
+    <div id="net-cursor">
+        <svg viewBox="0 0 100 100" class="net-svg">
+            <path d="M80,80 L100,100" stroke="#94a3b8" stroke-width="8" />
+            <ellipse cx="50" cy="50" rx="40" ry="30" stroke="#f8fafc" stroke-width="4" />
+            <path d="M20,50 Q50,90 80,50 M30,55 L70,55 M35,65 L65,65 M42,75 L58,75 M40,25 L40,75 M50,20 L50,80 M60,25 L60,75" stroke="#cbd5e1" stroke-width="1" />
+        </svg>
+    </div>
+
+    <!-- SCENE 1: INTRO -->
+    <div id="scene-intro" class="scene visible-scene">
+        <div class="bg-white/10 backdrop-blur-md p-10 rounded-[3rem] shadow-2xl text-center max-w-lg w-full mx-4 border border-white/30 relative overflow-hidden">
+            <div class="text-8xl mb-2 animate-bounce relative z-10">🎣</div>
+            <h1 class="text-6xl title-font text-white mb-2 drop-shadow-lg text-stroke">River Catch</h1>
+            <p class="text-blue-100 mb-8 text-xl font-bold drop-shadow">Memorize items, then catch them!</p>
+            <div class="space-y-6 relative z-10">
+                <p class="text-xs font-bold uppercase tracking-[0.3em] text-blue-200">Select Difficulty</p>
+                <div class="flex gap-4 justify-center">
+                    <button onclick="game.setAge('6-8')" class="transform hover:scale-105 active:scale-95 flex-1 py-5 rounded-2xl bg-gradient-to-b from-blue-400 to-blue-600 border-b-4 border-blue-800 shadow-lg font-bold text-xl text-white transition-all">Junior</button>
+                    <button onclick="game.setAge('9-12')" class="transform hover:scale-105 active:scale-95 flex-1 py-5 rounded-2xl bg-gradient-to-b from-purple-400 to-purple-600 border-b-4 border-purple-800 shadow-lg font-bold text-xl text-white transition-all">Pro</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCENE 2: GAMEPLAY -->
+    <div id="scene-game" class="scene hidden-scene !justify-start pt-8">
+        <div class="w-full max-w-5xl flex justify-between items-start px-6 z-20">
+            <div class="bg-black/20 backdrop-blur-md p-4 rounded-2xl border border-white/10 shadow-lg">
+                <div class="text-xs font-bold text-cyan-300 uppercase tracking-wider">Level</div>
+                <div id="ui-level" class="text-4xl title-font text-white drop-shadow-md">1</div>
+            </div>
+            <div class="flex-1 mx-8 text-center mt-2">
+                <div id="ui-message" class="text-4xl sm:text-5xl title-font text-white drop-shadow-lg text-stroke">Get Ready</div>
+                <div id="ui-submessage" class="text-base text-blue-100 font-bold bg-blue-900/40 px-4 py-1 rounded-full mt-2 backdrop-blur-sm inline-block shadow-inner border border-white/10">...</div>
+            </div>
+            <div class="bg-black/20 backdrop-blur-md p-4 rounded-2xl border border-white/10 shadow-lg text-right">
+                <div class="text-xs font-bold text-green-300 uppercase tracking-wider">Score</div>
+                <div id="ui-score" class="text-4xl title-font text-white drop-shadow-md">0</div>
+            </div>
+        </div>
+
+        <!-- Hit Area -->
+        <div id="game-layer" class="absolute inset-0 overflow-hidden z-10" onmousedown="game.inputAction(event)" ontouchstart="game.inputAction(event)"></div>
+
+        <div class="absolute bottom-8 z-20 flex gap-2 p-3 bg-black/20 backdrop-blur rounded-full border border-white/10">
+            <span id="lives-container" class="text-4xl drop-shadow-lg flex gap-2">❤️❤️</span>
+        </div>
+    </div>
+
+    <!-- SCENE 2.5: SUCCESS OVERLAY -->
+    <div id="scene-success" class="scene hidden-scene">
+        <div class="text-center">
+            <div class="text-8xl mb-2 drop-shadow-[0_0_25px_rgba(250,204,21,0.8)] animate-bounce">🌟</div>
+            <h2 class="text-7xl title-font text-yellow-300 drop-shadow-lg text-stroke tracking-wider">COMPLETE!</h2>
+            <p class="text-white font-bold text-2xl mt-4 drop-shadow-md bg-black/20 px-6 py-2 rounded-full backdrop-blur">River Cleared</p>
+        </div>
+    </div>
+
+    <!-- SCENE 3: GAME OVER -->
+    <div id="scene-over" class="scene hidden-scene bg-black/70 backdrop-blur-md z-30">
+        <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl text-center max-w-md w-full border-8 border-blue-400">
+            <div class="text-7xl mb-4">🛶</div>
+            <h2 class="text-4xl title-font text-slate-800 mb-2">Fishing Trip Over!</h2>
+            <div class="bg-slate-50 rounded-2xl p-6 mb-6 space-y-3 border border-slate-200">
+                <div class="flex justify-between"><span class="font-bold text-slate-400 uppercase text-xs">Score</span> <span id="end-score" class="font-bold text-blue-600 text-2xl">0</span></div>
+                <div class="flex justify-between"><span class="font-bold text-slate-400 uppercase text-xs">Level</span> <span id="end-level" class="font-bold text-purple-600 text-2xl">1</span></div>
+                <div class="flex justify-between"><span class="font-bold text-slate-400 uppercase text-xs">Accuracy</span> <span id="end-acc" class="font-bold text-green-600 text-2xl">0%</span></div>
+            </div>
+            <button onclick="game.init()" class="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-xl shadow-xl mb-4">Play Again</button>
+            <button onclick="dataManager.download()" class="text-sm text-slate-400 hover:text-blue-600 font-bold underline">Download Research Data</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. ASSETS ---
+        const ITEMS = [
+            '🐠','🐡','🦀','🐙','🦑','🦐','🦞','🐬','🐳','🦈','🦆','🐸','🐢','🐊','🦢','🦦', 
+            '🍎','🥥','🍉','🍇','🍌','🍍','🍓','🍒','🍑','🍐','🍊','🍋',
+            '👞','👢','🧢','👑','🎒','👓','⌚','💍','⚽','🏀','🪁','🧩'
+        ];
+
+        // --- 2. MOUSE TRACKING (NET + RIPPLES) ---
+        const net = document.getElementById('net-cursor');
+        const rippleLayer = document.getElementById('ripple-layer');
+        let lastX = 0, lastY = 0;
+
+        const moveNet = (x, y) => {
+            // Center the 120px net on the cursor
+            net.style.left = (x - 60) + 'px';
+            net.style.top = (y - 60) + 'px';
+            
+            if(Math.hypot(x - lastX, y - lastY) > 50) {
+                createRipple(x, y); lastX = x; lastY = y;
+            }
+        };
+
+        document.addEventListener('mousemove', (e) => moveNet(e.clientX, e.clientY));
+        
+        const createRipple = (x, y) => {
+            const r = document.createElement('div');
+            r.className = 'ripple';
+            r.style.left = (x - 10) + 'px'; r.style.top = (y - 10) + 'px';
+            rippleLayer.appendChild(r);
+            setTimeout(() => r.remove(), 600);
+        };
+
+        // --- 3. AUDIO SYSTEM ---
+        const sfx = {
+            ctx: null,
+            init() {
+                if(!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                if(this.ctx.state === 'suspended') this.ctx.resume();
+            },
+            play(type) {
+                if(!this.ctx) return;
+                const t = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.connect(gain); gain.connect(this.ctx.destination);
+
+                if (type === 'swing') {
+                    osc.frequency.setValueAtTime(150, t); osc.frequency.linearRampToValueAtTime(300, t+0.1);
+                    gain.gain.setValueAtTime(0.05, t); gain.gain.linearRampToValueAtTime(0, t+0.15);
+                    osc.type = 'triangle';
+                } else if (type === 'catch') {
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(500, t); osc.frequency.exponentialRampToValueAtTime(1000, t+0.1);
+                    gain.gain.setValueAtTime(0.1, t); gain.gain.exponentialRampToValueAtTime(0.01, t+0.3);
+                } else if (type === 'levelComplete') {
+                    // Happy ascending fanfare
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, t); // C
+                    gain.gain.setValueAtTime(0.1, t);
+                    gain.gain.exponentialRampToValueAtTime(0.01, t+0.5);
+                    
+                    // Schedule E and G
+                    const osc2 = this.ctx.createOscillator();
+                    const g2 = this.ctx.createGain();
+                    osc2.type = 'triangle';
+                    osc2.frequency.setValueAtTime(659.25, t+0.1); // E
+                    g2.gain.setValueAtTime(0.1, t+0.1);
+                    g2.gain.exponentialRampToValueAtTime(0.01, t+0.6);
+                    osc2.connect(g2); g2.connect(this.ctx.destination);
+                    osc2.start(t+0.1); osc2.stop(t+0.6);
+
+                    const osc3 = this.ctx.createOscillator();
+                    const g3 = this.ctx.createGain();
+                    osc3.type = 'triangle';
+                    osc3.frequency.setValueAtTime(783.99, t+0.2); // G
+                    g3.gain.setValueAtTime(0.1, t+0.2);
+                    g3.gain.exponentialRampToValueAtTime(0.01, t+0.7);
+                    osc3.connect(g3); g3.connect(this.ctx.destination);
+                    osc3.start(t+0.2); osc3.stop(t+0.7);
+                } else if (type === 'error') {
+                    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, t); osc.frequency.linearRampToValueAtTime(50, t+0.2);
+                    gain.gain.setValueAtTime(0.1, t); gain.gain.linearRampToValueAtTime(0, t+0.2);
+                }
+                osc.start(t); osc.stop(t+0.3);
+            }
+        };
+
+        // --- 4. DATA MANAGER ---
+        const dataManager = {
+            logs: [],
+            log(data) { this.logs.push({timestamp: new Date().toISOString(), ...data}); },
+            download() {
+                const blob = new Blob([JSON.stringify(this.logs, null, 2)], {type : 'application/json'});
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob); a.download = 'river_catch_data.json'; a.click();
+            }
+        };
+
+        // --- 5. GAME ENGINE ---
+        const game = {
+            state: { level: 1, score: 0, lives: 2, targets: [], toFind: new Set(), activeItems: [], phase: 'intro', age: '6-8', stats: {hits:0, errors:0} },
+            loopId: null,
+            spawnId: null,
+            timerId: null, // Track active timeouts
+
+            setAge(age) {
+                this.state.age = age;
+                sfx.init();
+                this.start();
+            },
+
+            init() {
+                this.toggleScenes('intro');
+                document.body.classList.remove('game-active');
+                document.getElementById('net-cursor').classList.remove('visible');
+                this.clearBoard();
+            },
+
+            start() {
+                this.state = { ...this.state, level: 1, score: 0, lives: 2, stats: {hits:0, errors:0} };
+                this.toggleScenes('game');
+                this.updateHUD();
+                this.startLevel();
+            },
+
+            toggleScenes(active) {
+                ['intro', 'game', 'over', 'success'].forEach(s => {
+                    const el = document.getElementById(`scene-${s}`);
+                    if(s === active) el.classList.replace('hidden-scene', 'visible-scene');
+                    else el.classList.replace('visible-scene', 'hidden-scene');
+                });
+            },
+
+            clearBoard() {
+                document.getElementById('game-layer').innerHTML = '';
+                this.state.activeItems = [];
+                if(this.spawnId) clearInterval(this.spawnId);
+                if(this.loopId) cancelAnimationFrame(this.loopId);
+                if(this.timerId) clearTimeout(this.timerId); // Kill pending transitions
+            },
+
+            startLevel() {
+                this.clearBoard();
+                this.state.phase = 'study';
+                
+                // Hide controls for study
+                document.body.classList.add('game-active'); 
+                document.getElementById('net-cursor').classList.remove('visible'); 
+
+                // Difficulty Logic
+                const count = Math.min(3 + Math.floor(this.state.level/2), 8);
+                const pool = [...ITEMS].sort(() => 0.5 - Math.random());
+                this.state.targets = pool.slice(0, count);
+                this.state.toFind = new Set(this.state.targets);
+
+                // UI
+                document.getElementById('ui-message').innerText = "Watch Closely";
+                document.getElementById('ui-submessage').innerText = `Memorize these ${count} items!`;
+
+                // Spawn Study Items
+                let i = 0;
+                const interval = setInterval(() => {
+                    if(i >= this.state.targets.length) {
+                        clearInterval(interval);
+                        // Use tracked timer for transition
+                        this.timerId = setTimeout(() => this.startCatchPhase(), 4000);
+                        return;
+                    }
+                    if(this.state.targets[i]) this.spawnItem(this.state.targets[i], true);
+                    i++;
+                }, 1200);
+                this.spawnId = interval;
+
+                this.gameLoop();
+            },
+
+            startCatchPhase() {
+                this.clearBoard();
+                this.state.phase = 'catch';
+                
+                // Show Net
+                document.getElementById('net-cursor').classList.add('visible');
+                
+                // UI
+                document.getElementById('ui-message').innerText = "CATCH 'EM!";
+                this.updateRemaining();
+
+                const spawnRate = Math.max(800, 1500 - (this.state.level * 100));
+                
+                this.spawnId = setInterval(() => {
+                    const canSpawnTarget = this.state.toFind.size > 0;
+                    const wantsTarget = Math.random() > 0.5; 
+
+                    let itemType;
+                    if (canSpawnTarget && wantsTarget) {
+                        const remaining = Array.from(this.state.toFind);
+                        itemType = remaining[Math.floor(Math.random() * remaining.length)];
+                    } else {
+                        const dists = ITEMS.filter(x => !this.state.targets.includes(x));
+                        itemType = dists[Math.floor(Math.random() * dists.length)];
+                    }
+                    
+                    // Fail-safe fallback if math somehow yields undefined
+                    this.spawnItem(itemType || '🐠', false);
+
+                }, spawnRate);
+
+                this.gameLoop();
+            },
+
+            spawnItem(emoji, isStudy) {
+                const el = document.createElement('div');
+                el.innerText = emoji;
+                el.className = 'floater';
+                el.style.left = '-120px';
+                el.style.top = (15 + Math.random() * 60) + '%';
+                
+                const speed = Math.random() * 1.5 + (isStudy ? 1.5 : 2 + (this.state.level * 0.3));
+                const rotationSpeed = (Math.random() - 0.5) * 2; 
+                
+                document.getElementById('game-layer').appendChild(el);
+                
+                this.state.activeItems.push({
+                    el: el, x: -120, y: parseFloat(el.style.top),
+                    rot: 0, rotSpeed: rotationSpeed, bobOffset: Math.random() * 100,
+                    speed: speed, emoji: emoji, dead: false
+                });
+            },
+
+            gameLoop() {
+                const width = window.innerWidth;
+                this.state.activeItems.forEach(obj => {
+                    if(obj.dead) return;
+                    obj.x += obj.speed;
+                    obj.rot += obj.rotSpeed;
+                    const bobY = Math.sin((obj.x + obj.bobOffset) * 0.01) * 15; 
+                    obj.el.style.transform = `translate(${obj.x}px, ${bobY}px) rotate(${obj.rot}deg)`;
+                    if(obj.x > width + 100) { obj.dead = true; obj.el.remove(); }
+                });
+                this.state.activeItems = this.state.activeItems.filter(o => !o.dead);
+                this.loopId = requestAnimationFrame(() => this.gameLoop());
+            },
+
+            inputAction(e) {
+                // Strict phase check + dead check
+                if (this.state.phase !== 'catch' || this.state.lives <= 0) return;
+
+                // 1. Visuals
+                net.classList.remove('swinging'); void net.offsetWidth; net.classList.add('swinging');
+                sfx.play('swing');
+
+                // 2. Coordinate Correction
+                let cx, cy;
+                if(e.type === 'touchstart') {
+                    cx = e.touches[0].clientX;
+                    cy = e.touches[0].clientY;
+                    moveNet(cx, cy); // Snap net to finger
+                    e.preventDefault(); 
+                } else {
+                    cx = e.clientX;
+                    cy = e.clientY;
+                }
+
+                // 3. Hit Detection (Forgiving Radius)
+                const hitboxRadius = 120; // Forgiving catch radius
+                let hitItem = null;
+                
+                const items = document.querySelectorAll('.floater');
+                items.forEach(el => {
+                    const rect = el.getBoundingClientRect();
+                    const elX = rect.left + rect.width/2;
+                    const elY = rect.top + rect.height/2;
+                    
+                    const dist = Math.hypot(cx - elX, cy - elY);
+                    // Check distance from mouse center (which is now net center)
+                    if(dist < hitboxRadius && !el.classList.contains('caught-anim')) {
+                        hitItem = el;
+                    }
+                });
+
+                if(hitItem) this.processCatch(hitItem);
+                else createRipple(cx, cy); // Visual feedback on miss
+            },
+
+            processCatch(el) {
+                const obj = this.state.activeItems.find(o => o.el === el);
+                if(!obj) return;
+
+                this.spawnBubbles(obj.x, parseFloat(el.style.top) / 100 * window.innerHeight);
+
+                if (this.state.toFind.has(obj.emoji)) {
+                    sfx.play('catch');
+                    el.classList.add('caught-anim');
+                    obj.dead = true; 
+                    this.state.score += 100;
+                    this.state.stats.hits++;
+                    this.state.toFind.delete(obj.emoji);
+                    this.updateRemaining();
+
+                    if (this.state.toFind.size === 0) {
+                        this.showSuccess();
+                    }
+                } else {
+                    sfx.play('error');
+                    el.style.filter = 'brightness(0.5) sepia(1) hue-rotate(-50deg) saturate(5)';
+                    this.state.lives--;
+                    this.state.stats.errors++;
+                    this.updateHUD();
+                    if(this.state.lives <= 0) this.gameOver();
+                }
+                this.updateHUD();
+            },
+
+            showSuccess() {
+                clearInterval(this.spawnId); // Stop spawning immediately
+                sfx.play('levelComplete');
+                document.getElementById('scene-success').classList.replace('hidden-scene', 'visible-scene');
+                
+                // Wait then start next level
+                this.timerId = setTimeout(() => {
+                    document.getElementById('scene-success').classList.replace('visible-scene', 'hidden-scene');
+                    this.endLevel();
+                }, 1500);
+            },
+
+            spawnBubbles(x, y) {
+                for(let i=0; i<5; i++) {
+                    const b = document.createElement('div');
+                    b.className = 'bubble-particle';
+                    b.style.left = (x + Math.random()*40 - 20) + 'px';
+                    b.style.top = (y + Math.random()*40 - 20) + 'px';
+                    b.style.width = (Math.random()*10 + 5) + 'px'; b.style.height = b.style.width;
+                    document.getElementById('game-layer').appendChild(b);
+                    setTimeout(() => b.remove(), 1000);
+                }
+            },
+
+            updateRemaining() {
+                const left = this.state.toFind.size;
+                const sub = document.getElementById('ui-submessage');
+                if(left === 0) sub.innerText = "River Cleared! 🎉";
+                else sub.innerText = `Catch ${left} more!`;
+            },
+
+            updateHUD() {
+                document.getElementById('ui-level').innerText = this.state.level;
+                document.getElementById('ui-score').innerText = this.state.score;
+                // Prevent negative hearts display
+                document.getElementById('lives-container').innerText = '❤️'.repeat(Math.max(0, this.state.lives));
+            },
+
+            endLevel() {
+                // Just state update now, delay handled by showSuccess
+                this.state.level++; 
+                this.state.score += 500;
+                this.updateHUD(); 
+                this.startLevel();
+            },
+
+            gameOver() {
+                clearInterval(this.spawnId);
+                cancelAnimationFrame(this.loopId);
+                this.toggleScenes('over');
+                this.state.phase = 'over'; // Explicit phase change
+                
+                // Restore cursor
+                document.body.classList.remove('game-active');
+                document.getElementById('net-cursor').classList.remove('visible');
+                
+                document.getElementById('end-score').innerText = this.state.score;
+                document.getElementById('end-level').innerText = this.state.level;
+                const total = this.state.stats.hits + this.state.stats.errors;
+                const acc = total > 0 ? Math.round((this.state.stats.hits / total) * 100) : 0;
+                document.getElementById('end-acc').innerText = acc + "%";
+                
+                dataManager.log({
+                    age: this.state.age, maxLevel: this.state.level,
+                    score: this.state.score, accuracy: acc
+                });
+            }
+        };
+    </script>
+</body>
+</html>

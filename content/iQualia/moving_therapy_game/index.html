@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumina: Stable Flow</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <style>
+        body { margin: 0; background-color: #000; overflow: hidden; font-family: 'Segoe UI', sans-serif; user-select: none; }
+        
+        /* LAYERS */
+        #bg-layer { position: absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(180deg, #101015 0%, #000 100%); z-index: -3; transition: background 1s; }
+        
+        /* HEART (Top Middle - Foreground) */
+        #heart-container { 
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%); 
+            text-align: center; z-index: 20; 
+        }
+        #heart-icon { 
+            font-size: 80px; display: inline-block; color: #ff7675;
+            text-shadow: 0 0 30px rgba(255, 118, 117, 0.6);
+            transition: transform 0.1s, color 1s; 
+        }
+        #breath-label {
+            font-size: 16px; letter-spacing: 4px; font-weight: 800; text-transform: uppercase;
+            margin-top: -10px; color: #fff; text-shadow: 0 0 10px #000; transition: color 1s;
+        }
+
+        /* SCORE */
+        #score-display {
+            position: absolute; top: 30px; right: 50px;
+            font-size: 32px; font-weight: 700; color: rgba(255,255,255,0.9);
+            text-shadow: 0 0 20px rgba(0,255,255,0.5); z-index: 20;
+        }
+
+        /* CONTROLS UI */
+        #controls-ui {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 15px; z-index: 20;
+        }
+        .key {
+            width: 50px; height: 50px; border: 2px solid rgba(255,255,255,0.2); border-radius: 8px;
+            color: #fff; display: flex; align-items: center; justify-content: center;
+            font-size: 20px; font-weight: bold; background: rgba(0,0,0,0.5);
+            transition: all 0.1s;
+        }
+        .key.active { background: #00cec9; border-color: #00cec9; color: #000; transform: scale(1.1); box-shadow: 0 0 15px #00cec9;}
+        
+        /* DEBUG STATUS */
+        #debug-status {
+            position: absolute; bottom: 90px; width: 100%; text-align: center;
+            color: rgba(255,255,255,0.3); font-size: 12px; font-family: monospace;
+        }
+        
+        /* VIGNETTE */
+        #vignette {
+            position: absolute; top:0; left:0; width:100%; height:100%;
+            background: radial-gradient(circle, transparent 40%, #000 130%);
+            transition: opacity 0.5s; z-index: 5; pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="bg-layer"></div>
+    <div id="vignette"></div>
+    
+    <div id="heart-container">
+        <div id="heart-icon">❤</div>
+        <div id="breath-label">Sync</div>
+    </div>
+
+    <div id="score-display">0</div>
+
+    <div id="debug-status">PHYSICS READY</div>
+
+    <div id="controls-ui">
+        <div id="key-left" class="key">←</div>
+        <div id="key-down" class="key">↓</div>
+        <div id="key-up" class="key">↑</div>
+        <div id="key-right" class="key">→</div>
+    </div>
+
+    <script>
+        // --- 1. ENGINE CONFIGURATION ---
+        const Engine = Matter.Engine, Render = Matter.Render, Runner = Matter.Runner,
+              Bodies = Matter.Bodies, Composite = Matter.Composite, Events = Matter.Events,
+              Body = Matter.Body, Vector = Matter.Vector;
+
+        const engine = Engine.create();
+        const world = engine.world;
+        engine.gravity.y = 1.6; // Strong gravity for snappy controls
+
+        const render = Render.create({
+            element: document.body,
+            engine: engine,
+            options: { 
+                width: window.innerWidth, 
+                height: window.innerHeight, 
+                wireframes: false, 
+                background: 'transparent',
+                hasBounds: true 
+            }
+        });
+
+        // --- 2. PLAYER SETUP ---
+        // We use a high friction player so they don't slide on the ground like ice
+        // But we set frictionAir to 0 so they fall fast
+        const player = Bodies.rectangle(200, 300, 30, 60, {
+            friction: 0, 
+            frictionAir: 0.0, 
+            inertia: Infinity, // Prevent rotation
+            label: 'player',
+            render: { fillStyle: '#fff', strokeStyle: '#fff', lineWidth: 2 }
+        });
+        Composite.add(world, player);
+
+        // --- 3. LEVEL GENERATION ---
+        let lastX = 200;
+        let score = 0;
+        const GROUND_Y = window.innerHeight - 150;
+        
+        // Initial Floor
+        Composite.add(world, Bodies.rectangle(200, GROUND_Y + 50, 1500, 100, { isStatic: true, label: 'ground', render: { fillStyle: '#222' } }));
+        lastX = 800;
+
+        function generateChunk(phase) {
+            const width = 600 + Math.random() * 200; 
+            const x = lastX + (width / 2);
+            
+            if (phase > 0.6) {
+                // INHALE (Sky)
+                const platY = GROUND_Y + 50; 
+                Composite.add(world, Bodies.rectangle(x, platY, width, 100, { isStatic: true, label: 'ground', render: { fillStyle: '#1a1a1a' } }));
+                Composite.add(world, Bodies.rectangle(x, GROUND_Y - 20, 20, 40, { isStatic: true, label: 'hazard', render: { fillStyle: '#ff4757' } }));
+                Composite.add(world, Bodies.circle(x, GROUND_Y - 160, 12, { isStatic: true, isSensor: true, label: 'orb', render: { fillStyle: '#00cec9' } }));
+            } else {
+                // EXHALE (Ground)
+                Composite.add(world, Bodies.rectangle(x, GROUND_Y + 50, width, 100, { isStatic: true, label: 'ground', render: { fillStyle: '#1a1a1a' } }));
+                Composite.add(world, Bodies.rectangle(x, GROUND_Y - 120, width, 120, { isStatic: true, label: 'hazard', render: { fillStyle: '#2f3542' } }));
+                Composite.add(world, Bodies.circle(x, GROUND_Y - 20, 12, { isStatic: true, isSensor: true, label: 'orb', render: { fillStyle: '#f1c40f' } }));
+            }
+            lastX += width;
+        }
+        for(let i=0; i<4; i++) generateChunk(0.8);
+
+
+        // --- 4. ROBUST INPUT SYSTEM ---
+        const keys = { up: false, down: false, left: false, right: false };
+        let isSliding = false;
+
+        function updateUI(id, active) {
+            const el = document.getElementById(id);
+            if(active) el.classList.add('active'); else el.classList.remove('active');
+        }
+
+        function setKey(code, active) {
+            if (code === 'ArrowUp' || code === 'Space' || code === 'KeyW') { keys.up = active; updateUI('key-up', active); }
+            if (code === 'ArrowDown' || code === 'KeyS') { 
+                keys.down = active; updateUI('key-down', active); 
+                handleSlide(active);
+            }
+            if (code === 'ArrowLeft' || code === 'KeyA') { keys.left = active; updateUI('key-left', active); }
+            if (code === 'ArrowRight' || code === 'KeyD') { keys.right = active; updateUI('key-right', active); }
+        }
+
+        window.addEventListener('keydown', e => setKey(e.code, true));
+        window.addEventListener('keyup', e => setKey(e.code, false));
+        window.addEventListener('mousedown', () => setKey('Space', true));
+        window.addEventListener('mouseup', () => setKey('Space', false));
+
+        function handleSlide(active) {
+            if (active && !isSliding) {
+                // Shrink
+                Body.scale(player, 1, 0.5); 
+                isSliding = true;
+                // Fast fall
+                Body.applyForce(player, player.position, {x:0, y:0.05});
+            } else if (!active && isSliding) {
+                // Grow
+                Body.scale(player, 1, 2.0);
+                Body.setPosition(player, {x: player.position.x, y: player.position.y - 20});
+                isSliding = false;
+            }
+        }
+
+
+        // --- 5. GROUND SENSOR (THE FIX) ---
+        let groundContacts = 0;
+        let lastGroundedTime = 0;
+
+        Events.on(engine, 'collisionStart', (e) => {
+            e.pairs.forEach(p => {
+                // If player touches ground/hazard
+                if(p.bodyA.label === 'player' || p.bodyB.label === 'player') {
+                    const other = p.bodyA.label === 'player' ? p.bodyB : p.bodyA;
+                    if(other.label === 'ground' || other.label === 'hazard') {
+                        groundContacts++;
+                    }
+                }
+            });
+        });
+
+        Events.on(engine, 'collisionEnd', (e) => {
+            e.pairs.forEach(p => {
+                if(p.bodyA.label === 'player' || p.bodyB.label === 'player') {
+                    const other = p.bodyA.label === 'player' ? p.bodyB : p.bodyA;
+                    if(other.label === 'ground' || other.label === 'hazard') {
+                        groundContacts--;
+                    }
+                }
+            });
+        });
+
+        // --- 6. GAME LOOP ---
+        let cycle = 0;
+        const BASE_SPEED = 7;
+
+        Events.on(engine, 'beforeUpdate', function() {
+            const now = Date.now();
+
+            // A. GROUND STATUS UPDATE
+            // If we have contact, we are grounded. Update timestamp for "Coyote Time"
+            if (groundContacts > 0) {
+                lastGroundedTime = now;
+                document.getElementById('debug-status').innerText = "STATUS: GROUNDED";
+                document.getElementById('debug-status').style.color = "#0f0";
+            } else {
+                document.getElementById('debug-status').innerText = "STATUS: AIRBORNE";
+                document.getElementById('debug-status').style.color = "#ccc";
+            }
+
+            // B. MOVEMENT
+            let vx = BASE_SPEED;
+            if (keys.right) vx = 11; // Sprint
+            if (keys.left) vx = 4;   // Brake
+
+            // IMPORTANT: We use setVelocity for X, but we must preserve Y (gravity)
+            // unless we are jumping
+            Body.setVelocity(player, { x: vx, y: player.velocity.y });
+            Body.setAngularVelocity(player, 0); // Lock rotation
+
+            // C. JUMP LOGIC (With Coyote Time Buffer of 150ms)
+            if (keys.up) {
+                // Check if we were on ground recently (150ms grace period)
+                if (now - lastGroundedTime < 150) {
+                    // Reset timer so we can't double jump instantly
+                    lastGroundedTime = 0; 
+                    // Apply Impulse
+                    Body.setVelocity(player, { x: vx, y: -17 });
+                }
+            }
+
+            // D. BREATH CYCLE
+            cycle += 0.015;
+            const pulse = (Math.sin(cycle) + 1) / 2;
+            
+            // Visuals
+            const heart = document.getElementById('heart-icon');
+            const label = document.getElementById('breath-label');
+            const bg = document.getElementById('bg-layer');
+            const scale = 1.0 + (pulse * 0.3);
+            heart.style.transform = `scale(${scale})`;
+
+            if (pulse > 0.6) {
+                label.innerText = "EXPAND"; label.style.color = "#00cec9"; heart.style.color = "#00cec9";
+                bg.style.background = 'linear-gradient(180deg, #0b1a2a 0%, #000 100%)'; 
+                engine.gravity.y = 1.0;
+            } else if (pulse < 0.4) {
+                label.innerText = "CONTRACT"; label.style.color = "#ff7675"; heart.style.color = "#ff7675";
+                bg.style.background = 'linear-gradient(180deg, #2a0b0b 0%, #000 100%)'; 
+                engine.gravity.y = 1.6;
+            } else {
+                label.innerText = "..."; label.style.color = "#888"; heart.style.color = "#444";
+            }
+
+            // E. CLEANUP & GEN
+            if(player.position.y < 0) Body.setPosition(player, { x: player.position.x, y: 0 }); // Ceiling
+            if(player.position.x > lastX - 1000) generateChunk(pulse);
+            
+            // Camera
+            Render.lookAt(render, {
+                min: { x: player.position.x - 300, y: 0 },
+                max: { x: player.position.x + 700, y: window.innerHeight }
+            });
+
+            // Respawn
+            if(player.position.y > window.innerHeight + 100) {
+                Body.setPosition(player, {x: player.position.x, y: 100});
+                Body.setVelocity(player, {x: vx, y: 0});
+                score = Math.max(0, score - 50);
+                document.getElementById('score-display').innerText = score;
+            }
+        });
+
+        // COLLISIONS (Scoring)
+        Events.on(engine, 'collisionStart', (e) => {
+            e.pairs.forEach(p => {
+                if(p.bodyA.label === 'orb' || p.bodyB.label === 'orb') {
+                    const orb = p.bodyA.label === 'orb' ? p.bodyA : p.bodyB;
+                    Composite.remove(world, orb);
+                    score += 100;
+                    document.getElementById('score-display').innerText = score;
+                }
+                if(p.bodyA.label === 'hazard' || p.bodyB.label === 'hazard') {
+                    Body.setVelocity(player, {x: -2, y: -5}); // Knockback
+                    score -= 50;
+                    document.getElementById('score-display').innerText = score;
+                }
+            });
+        });
+
+        // --- 7. RENDER EFFECTS ---
+        const trail = [];
+        Events.on(render, 'afterRender', function() {
+            const ctx = render.context;
+            trail.push({ x: player.position.x, y: player.position.y });
+            if (trail.length > 15) trail.shift();
+
+            const pulseColor = document.getElementById('heart-icon').style.color;
+            ctx.globalCompositeOperation = 'lighter';
+            
+            // Trail
+            ctx.beginPath();
+            if (trail.length > 1) {
+                ctx.moveTo(trail[0].x, trail[0].y);
+                for (let i = 1; i < trail.length; i++) ctx.lineTo(trail[i].x, trail[i].y);
+            }
+            ctx.strokeStyle = pulseColor || '#fff';
+            ctx.lineWidth = 10; ctx.lineCap = 'round'; ctx.stroke();
+
+            // Glow
+            ctx.shadowBlur = 30; ctx.shadowColor = pulseColor || '#fff'; ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            const w = 30; const h = isSliding ? 30 : 60;
+            ctx.rect(player.position.x - w/2, player.position.y - h/2, w, h);
+            ctx.fill();
+            
+            ctx.shadowBlur = 0; ctx.globalCompositeOperation = 'source-over';
+        });
+
+        Runner.run(Runner.create(), engine);
+        Render.run(render);
+
+    </script>
+</body>
+</html>

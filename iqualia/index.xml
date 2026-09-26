@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>iQualia Games | KSHITIJ KUMAR</title>
+    <link>http://localhost:1313/iqualia/</link>
+      <atom:link href="http://localhost:1313/iqualia/index.xml" rel="self" type="application/rss+xml" />
+    <description>iQualia Games</description>
+    <generator>Hugo Blox Builder (https://hugoblox.com)</generator><language>en-us</language>
+    <image>
+      <url>http://localhost:1313/media/icon_hu_729f4604415becdb.png</url>
+      <title>iQualia Games</title>
+      <link>http://localhost:1313/iqualia/</link>
+    </image>
+    
+    <item>
+      <title>corsi_3d</title>
+      <link>http://localhost:1313/iqualia/corsi_3d/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/iqualia/corsi_3d/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Corsi_kids</title>
+      <link>http://localhost:1313/iqualia/corsi_kids/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/iqualia/corsi_kids/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>echo_carven_3d</title>
+      <link>http://localhost:1313/iqualia/echo_carven_3d/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/iqualia/echo_carven_3d/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Echo_carven_auditory task</title>
+      <link>http://localhost:1313/iqualia/echo_carven_auditory-task/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/iqualia/echo_carven_auditory-task/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>moving_therapy_game</title>
+      <link>http://localhost:1313/iqualia/moving_therapy_game/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/iqualia/moving_therapy_game/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>number_arrangement</title>
+      <link>http://localhost:1313/iqualia/number_arrangement/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/iqualia/number_arrangement/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>number_game_wm</title>
+      <link>http://localhost:1313/iqualia/number_game_wm/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/iqualia/number_game_wm/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>runner_wm</title>
+      <link>http://localhost:1313/iqualia/runner_wm/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/iqualia/runner_wm/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Short_term_memory_kids</title>
+      <link>http://localhost:1313/iqualia/short_term_memory_kids/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/iqualia/short_term_memory_kids/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>wm_run_3d</title>
+      <link>http://localhost:1313/iqualia/wm_run_3d/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/iqualia/wm_run_3d/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>

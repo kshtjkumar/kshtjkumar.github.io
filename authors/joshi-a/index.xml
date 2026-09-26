@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Joshi A | KSHITIJ KUMAR</title>
+    <link>http://localhost:3000/authors/joshi-a/</link>
+      <atom:link href="http://localhost:3000/authors/joshi-a/index.xml" rel="self" type="application/rss+xml" />
+    <description>Joshi A</description>
+    <generator>Hugo Blox Builder (https://hugoblox.com)</generator><language>en-us</language><lastBuildDate>Thu, 01 Dec 2022 00:00:00 +0000</lastBuildDate>
+    <image>
+      <url>http://localhost:3000/media/icon_hu_729f4604415becdb.png</url>
+      <title>Joshi A</title>
+      <link>http://localhost:3000/authors/joshi-a/</link>
+    </image>
+    
+    <item>
+      <title>Foraging in dynamic environments</title>
+      <link>http://localhost:3000/publication/conference-papers/paper-2/</link>
+      <pubDate>Thu, 01 Dec 2022 00:00:00 +0000</pubDate>
+      <guid>http://localhost:3000/publication/conference-papers/paper-2/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Working memory and decision making</title>
+      <link>http://localhost:3000/publication/conference-papers/paper-3/</link>
+      <pubDate>Sat, 01 Oct 2022 00:00:00 +0000</pubDate>
+      <guid>http://localhost:3000/publication/conference-papers/paper-3/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Impact of working memory on patch foraging</title>
+      <link>http://localhost:3000/publication/conference-papers/paper-4/</link>
+      <pubDate>Tue, 01 Mar 2022 00:00:00 +0000</pubDate>
+      <guid>http://localhost:3000/publication/conference-papers/paper-4/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Environmental Volatility Drives Working Memory Use in Dynamic Foraging Conditions</title>
+      <link>http://localhost:3000/publication/journal-papers/journal-2/</link>
+      <pubDate>Sun, 07 Apr 2019 00:00:00 +0000</pubDate>
+      <guid>http://localhost:3000/publication/journal-papers/journal-2/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>

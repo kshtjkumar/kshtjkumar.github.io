@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Deshpande K | KSHITIJ KUMAR</title>
+    <link>http://localhost:3000/authors/deshpande-k/</link>
+      <atom:link href="http://localhost:3000/authors/deshpande-k/index.xml" rel="self" type="application/rss+xml" />
+    <description>Deshpande K</description>
+    <generator>Hugo Blox Builder (https://hugoblox.com)</generator><language>en-us</language><lastBuildDate>Fri, 01 Sep 2023 00:00:00 +0000</lastBuildDate>
+    <image>
+      <url>http://localhost:3000/media/icon_hu_729f4604415becdb.png</url>
+      <title>Deshpande K</title>
+      <link>http://localhost:3000/authors/deshpande-k/</link>
+    </image>
+    
+    <item>
+      <title>A Translational Platform for Polyimide Neural Interfaces: Polyimide Synthesis and In Vivo Evaluation in Epileptic Mice</title>
+      <link>http://localhost:3000/publication/journal-papers/journal-1/</link>
+      <pubDate>Fri, 01 Sep 2023 00:00:00 +0000</pubDate>
+      <guid>http://localhost:3000/publication/journal-papers/journal-1/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>

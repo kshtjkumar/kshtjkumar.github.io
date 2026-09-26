@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Magic Number Bubbles</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+        :root {
+            --bg1: #6fd3ff;   /* soft bright blue */
+            --bg2: #b7f4c7;   /* soft bright green */
+            --panel: rgba(255, 255, 255, 0.16);
+            --panel-strong: rgba(255, 255, 255, 0.9);
+            --text-main: #000000;
+            --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+                sans-serif;
+            color: var(--text-main);
+            background: radial-gradient(circle at top left, var(--bg1), var(--bg2));
+            min-height: 100vh;
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .game-wrapper {
+            width: 100%;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 10px;
+            display: flex;
+            align-items: stretch;
+        }
+
+        .game-container {
+            position: relative;
+            flex: 1;
+            border-radius: 24px;
+            background: linear-gradient(
+                145deg,
+                rgba(255, 255, 255, 0.2),
+                rgba(255, 255, 255, 0.06)
+            );
+            backdrop-filter: blur(18px);
+            box-shadow: var(--shadow-soft);
+            padding: 12px 16px 18px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* HUD / top bar */
+        .hud {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 8px;
+            color: #000000;
+        }
+
+        .logo {
+            font-size: clamp(1.2rem, 2.4vw, 1.6rem);
+            font-weight: 800;
+            letter-spacing: 0.03em;
+            display: flex;
+            align-items: center;
+            gap: 0.35em;
+        }
+
+        .logo-emoji {
+            font-size: 1.4em;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
+        }
+
+        .hud-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .hud-item {
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: var(--panel);
+            font-size: clamp(0.8rem, 1.4vw, 0.95rem);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+            color: #000000;
+        }
+
+        .hud-item span.value {
+            font-weight: 700;
+        }
+
+        /* Rule row (minimal text) */
+        .rule-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 6px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: var(--panel);
+            font-size: clamp(0.85rem, 1.5vw, 1rem);
+            gap: 8px;
+            color: #000000;
+        }
+
+        .order-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 600;
+        }
+
+        .order-arrow {
+            font-size: 1.15em;
+        }
+
+        /* Time bar */
+        .time-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 4px 0 4px;
+            font-size: clamp(0.75rem, 1.4vw, 0.9rem);
+            color: #000000;
+        }
+
+        .time-label {
+            font-weight: 600;
+        }
+
+        .timebar-shell {
+            flex: 1;
+            height: 10px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.6);
+            overflow: hidden;
+        }
+
+        #timebar-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #00b4d8, #ff6b6b);
+            transform-origin: left center;
+        }
+
+        /* Play area */
+        .play-area {
+            flex: 1;
+            margin-top: 6px;
+            border-radius: 20px;
+            background: radial-gradient(
+                circle at bottom right,
+                rgba(255, 255, 255, 0.45),
+                rgba(255, 255, 255, 0.08)
+            );
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: stretch;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #bubbles-container {
+            position: relative;
+            flex: 1;
+            width: 100%;
+            height: 100%;
+        }
+
+        .bubble {
+            position: absolute;
+            border: none;
+            outline: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            color: #ffffff; /* numbers stay white for contrast */
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+            transform: translateY(0) scale(1);
+            transition:
+                transform 0.16s ease,
+                box-shadow 0.18s ease,
+                filter 0.18s ease,
+                opacity 0.18s ease;
+        }
+
+        .bubble:hover {
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 0 14px 30px rgba(0, 0, 0, 0.4);
+            filter: brightness(1.05);
+        }
+
+        .bubble:active {
+            transform: translateY(2px) scale(0.96);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .bubble.correct {
+            animation: pop-correct 0.4s ease-out forwards;
+        }
+
+        .bubble.wrong {
+            animation: shake-wrong 0.35s ease;
+        }
+
+        .bubble.disabled {
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        @keyframes pop-correct {
+            0% {
+                transform: scale(1) translateY(0);
+            }
+            40% {
+                transform: scale(1.18) translateY(-6px);
+            }
+            100% {
+                transform: scale(0.85) translateY(0);
+                opacity: 0.4;
+            }
+        }
+
+        @keyframes shake-wrong {
+            0% {
+                transform: translateX(0);
+            }
+            20% {
+                transform: translateX(-8px);
+            }
+            40% {
+                transform: translateX(8px);
+            }
+            60% {
+                transform: translateX(-6px);
+            }
+            80% {
+                transform: translateX(6px);
+            }
+            100% {
+                transform: translateX(0);
+            }
+        }
+
+        /* Floating background orbs */
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.14;
+            filter: blur(3px);
+            pointer-events: none;
+        }
+
+        .orb.orb-1 {
+            width: 200px;
+            height: 200px;
+            background: #ffb703;
+            top: -40px;
+            left: -40px;
+        }
+
+        .orb.orb-2 {
+            width: 260px;
+            height: 260px;
+            background: #9b5de5;
+            bottom: -80px;
+            right: -40px;
+        }
+
+        .orb.orb-3 {
+            width: 180px;
+            height: 180px;
+            background: #ff6b6b;
+            bottom: 10%;
+            left: -60px;
+        }
+
+        /* Feedback message overlay */
+        #message {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            opacity: 0;
+            transform: scale(0.9);
+            transition:
+                opacity 0.25s ease,
+                transform 0.25s ease;
+        }
+
+        #message.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .message-card {
+            padding: 10px 18px;
+            border-radius: 999px;
+            background: var(--panel-strong);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            font-size: clamp(1.1rem, 2.2vw, 1.5rem);
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: #000000;
+        }
+
+        .message-emoji {
+            font-size: 1.5em;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
+        }
+
+        /* Bottom hint */
+        .bottom-hint {
+            text-align: center;
+            margin-top: 4px;
+            font-size: clamp(0.7rem, 1.3vw, 0.85rem);
+            opacity: 0.9;
+            color: #000000;
+        }
+
+        @media (max-width: 600px) {
+            .game-container {
+                border-radius: 0;
+                box-shadow: none;
+                padding: 10px;
+            }
+
+            .play-area {
+                border-radius: 16px;
+            }
+
+            .logo {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-wrapper">
+        <div class="game-container">
+            <div class="hud">
+                <div class="logo">
+                    <span class="logo-emoji">🔢</span>
+                    <span>Magic Number Bubbles</span>
+                </div>
+                <div class="hud-right">
+                    <div class="hud-item">
+                        ⭐
+                        <span class="value" id="score">0</span>
+                    </div>
+                    <div class="hud-item">
+                        🏆 Lv
+                        <span class="value" id="level">1</span>
+                    </div>
+                    <div class="hud-item">
+                        ❤️
+                        <span class="value" id="lives">5</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rule-row">
+                <div class="order-label" id="order-label">
+                    <span class="order-arrow" id="order-arrow">⬆️</span>
+                    <span id="order-text">Small → Big</span>
+                </div>
+            </div>
+
+            <div class="time-row">
+                <div class="time-label">Time</div>
+                <div class="timebar-shell">
+                    <div id="timebar-fill"></div>
+                </div>
+            </div>
+
+            <div class="play-area">
+                <!-- Decorative orbs -->
+                <div class="orb orb-1"></div>
+                <div class="orb orb-2"></div>
+                <div class="orb orb-3"></div>
+
+                <!-- Bubbles appear here -->
+                <div id="bubbles-container"></div>
+
+                <!-- Feedback message -->
+                <div id="message">
+                    <div class="message-card">
+                        <span class="message-emoji" id="message-emoji">🎉</span>
+                        <span id="message-text">Great!</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bottom-hint">
+                Tap the bubbles in the right order to keep playing.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Color palette for bubbles ---
+        const BUBBLE_COLORS = [
+            "#FFB703", // yellow-orange
+            "#FF6B6B", // coral red
+            "#9B5DE5", // purple
+            "#00B4D8", // bright cyan/blue
+            "#38B000"  // green
+        ];
+
+        const state = {
+            level: 1,
+            score: 0,
+            currentNumbers: [],
+            expectedOrder: [],
+            ascending: true,
+            clickIndex: 0,
+            acceptingInput: false,
+            round: 0,
+            bubbleCount: 3,           // adaptive, main difficulty dimension
+            baseTimePerBubbleMs: 1500, // adaptive time pressure
+            lastTwoResults: [],        // [true/false, ...]
+            lives: 5,
+            timerInterval: null,
+            timeLimitMs: 0,
+            pendingChallenge: false,
+            challengeCount: 60,        // special high-load challenge
+        };
+
+        const scoreEl = document.getElementById("score");
+        const levelEl = document.getElementById("level");
+        const livesEl = document.getElementById("lives");
+        const bubblesContainer = document.getElementById("bubbles-container");
+        const orderLabel = document.getElementById("order-label");
+        const orderArrow = document.getElementById("order-arrow");
+        const orderText = document.getElementById("order-text");
+        const messageOverlay = document.getElementById("message");
+        const messageText = document.getElementById("message-text");
+        const messageEmoji = document.getElementById("message-emoji");
+        const timebarFill = document.getElementById("timebar-fill");
+
+        // --- Sound (pure Web Audio, no external files) ---
+        let audioCtx = null;
+        function getAudioContext() {
+            if (!audioCtx) {
+                const AudioContext =
+                    window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) {
+                    audioCtx = new AudioContext();
+                }
+            }
+            return audioCtx;
+        }
+
+        function playTone(freq, duration = 0.18) {
+            const ctx = getAudioContext();
+            if (!ctx) return;
+
+            const now = ctx.currentTime;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(freq, now);
+
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.exponentialRampToValueAtTime(0.25, now + 0.03);
+            gain.gain.exponentialRampToValueAtTime(
+                0.0001,
+                now + duration
+            );
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.start(now);
+            osc.stop(now + duration + 0.05);
+        }
+
+        function playCorrectSound() {
+            playTone(880, 0.14);
+            setTimeout(() => playTone(1175, 0.14), 120);
+        }
+
+        function playWrongSound() {
+            playTone(260, 0.25);
+        }
+
+        // --- Utility ---
+        function randomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function showMessage(text, emoji) {
+            messageText.textContent = text;
+            messageEmoji.textContent = emoji;
+            messageOverlay.classList.add("visible");
+        }
+
+        function hideMessage() {
+            messageOverlay.classList.remove("visible");
+        }
+
+        function updateLivesUI() {
+            livesEl.textContent = state.lives;
+        }
+
+        function clearTimer() {
+            if (state.timerInterval) {
+                clearInterval(state.timerInterval);
+                state.timerInterval = null;
+            }
+        }
+
+        function startTimerForRound(count) {
+            clearTimer();
+
+            // Adaptive time limit based on bubble count + difficulty
+            const rawLimit = state.baseTimePerBubbleMs * count;
+            state.timeLimitMs = Math.max(6000, Math.min(rawLimit, 35000));
+
+            const start = performance.now();
+            const end = start + state.timeLimitMs;
+
+            // Reset bar to full
+            timebarFill.style.width = "100%";
+
+            state.timerInterval = setInterval(() => {
+                const now = performance.now();
+                const remaining = end - now;
+                const frac = remaining / state.timeLimitMs;
+
+                if (!state.acceptingInput) {
+                    clearTimer();
+                    return;
+                }
+
+                if (frac <= 0) {
+                    timebarFill.style.width = "0%";
+                    clearTimer();
+                    handleTimeout();
+                } else {
+                    timebarFill.style.width = (frac * 100).toFixed(1) + "%";
+                }
+            }, 60);
+        }
+
+        // --- Difficulty adaptation based on last 2 rounds ---
+        function recordRoundResult(success) {
+            state.lastTwoResults.push(success);
+            if (state.lastTwoResults.length > 2) {
+                state.lastTwoResults.shift();
+            }
+            adjustDifficulty();
+        }
+
+        function adjustDifficulty() {
+            const results = state.lastTwoResults;
+            if (results.length < 2) return;
+
+            const successes = results.filter(Boolean).length;
+
+            if (successes === 2) {
+                // Player doing well -> increase bubbles & tighten time
+                if (state.bubbleCount < 30) {
+                    if (state.bubbleCount < 6) {
+                        state.bubbleCount += 1;
+                    } else if (state.bubbleCount < 12) {
+                        state.bubbleCount += 2;
+                    } else {
+                        state.bubbleCount += 3;
+                    }
+                    if (state.bubbleCount > 30) state.bubbleCount = 30;
+                } else if (!state.pendingChallenge) {
+                    // Occasionally schedule a big challenge
+                    state.pendingChallenge = true;
+                }
+
+                state.baseTimePerBubbleMs = Math.max(
+                    700,
+                    state.baseTimePerBubbleMs - 80
+                );
+            } else if (successes === 0) {
+                // Player struggling -> reduce load & relax time
+                if (state.bubbleCount > 3) {
+                    if (state.bubbleCount > 15) {
+                        state.bubbleCount -= 3;
+                    } else if (state.bubbleCount > 8) {
+                        state.bubbleCount -= 2;
+                    } else {
+                        state.bubbleCount -= 1;
+                    }
+                    if (state.bubbleCount < 3) state.bubbleCount = 3;
+                }
+
+                state.baseTimePerBubbleMs = Math.min(
+                    2200,
+                    state.baseTimePerBubbleMs + 120
+                );
+            } else {
+                // Mixed performance -> keep similar
+            }
+        }
+
+        // --- Number generation ---
+        function generateNumbers(count) {
+            // Ensure enough unique numbers (max 99 so they stay 1–2 digits)
+            const maxValue = Math.max(9, count * 3);
+            const numbersSet = new Set();
+
+            while (numbersSet.size < count) {
+                const value = randomInt(1, Math.min(maxValue, 99));
+                numbersSet.add(value);
+            }
+            return Array.from(numbersSet);
+        }
+
+        function setOrderUI() {
+            if (state.ascending) {
+                orderArrow.textContent = "⬆️";
+                orderText.textContent = "Small → Big";
+                orderLabel.classList.remove("order-down");
+                orderLabel.classList.add("order-up");
+            } else {
+                orderArrow.textContent = "⬇️";
+                orderText.textContent = "Big → Small";
+                orderLabel.classList.remove("order-up");
+                orderLabel.classList.add("order-down");
+            }
+        }
+
+        function clearBubbles() {
+            bubblesContainer.innerHTML = "";
+        }
+
+        function getBubbleSizeRange(count) {
+            if (count <= 5) {
+                return [80, 130];
+            } else if (count <= 10) {
+                return [70, 110];
+            } else if (count <= 15) {
+                return [60, 100];
+            } else if (count <= 22) {
+                return [50, 80];
+            } else if (count <= 30) {
+                return [40, 70];
+            } else {
+                // Special challenge: many small bubbles
+                return [26, 34];
+            }
+        }
+
+        function renderBubbles() {
+            clearBubbles();
+            const rect = bubblesContainer.getBoundingClientRect();
+            const width = rect.width;
+            const height = rect.height;
+            const count = state.currentNumbers.length;
+
+            const [minSize, maxSize] = getBubbleSizeRange(count);
+            const placed = [];
+            const padding = 4; // space between bubbles
+
+            function findPosition(radius) {
+                const maxAttempts = 80;
+                for (let attempt = 0; attempt < maxAttempts; attempt++) {
+                    const x = randomInt(radius, Math.max(radius, width - radius));
+                    const y = randomInt(radius, Math.max(radius, height - radius));
+
+                    let ok = true;
+                    for (const p of placed) {
+                        const dx = x - p.x;
+                        const dy = y - p.y;
+                        const distSq = dx * dx + dy * dy;
+                        const minDist = radius + p.radius + padding;
+                        if (distSq < minDist * minDist) {
+                            ok = false;
+                            break;
+                        }
+                    }
+                    if (ok) {
+                        return { x, y };
+                    }
+                }
+                // If placement is too dense, return null to retry with smaller radius
+                return null;
+            }
+
+            state.currentNumbers.forEach((num, index) => {
+                let radius;
+                let pos = null;
+                let tries = 0;
+
+                while (!pos && tries < 4) {
+                    const size = randomInt(
+                        minSize - tries * 4,
+                        maxSize - tries * 4
+                    );
+                    radius = Math.max(12, size / 2);
+                    pos = findPosition(radius);
+                    tries++;
+                }
+
+                if (!pos) {
+                    // Fallback: place with minimal radius without checking (very rare)
+                    radius = 12;
+                    pos = {
+                        x: randomInt(radius, Math.max(radius, width - radius)),
+                        y: randomInt(radius, Math.max(radius, height - radius))
+                    };
+                }
+
+                placed.push({ x: pos.x, y: pos.y, radius });
+
+                const bubble = document.createElement("button");
+                bubble.className = "bubble";
+                bubble.textContent = num;
+                bubble.dataset.value = String(num);
+
+                const color = BUBBLE_COLORS[index % BUBBLE_COLORS.length];
+                bubble.style.background = color;
+
+                const diameter = radius * 2;
+                bubble.style.width = diameter + "px";
+                bubble.style.height = diameter + "px";
+                bubble.style.left = pos.x - radius + "px";
+                bubble.style.top = pos.y - radius + "px";
+                bubble.style.fontSize = Math.max(16, radius * 0.7) + "px";
+
+                bubble.addEventListener("click", onBubbleClick);
+                bubblesContainer.appendChild(bubble);
+            });
+        }
+
+        function endRoundSuccess() {
+            state.acceptingInput = false;
+            clearTimer();
+
+            const gained = 10 * state.currentNumbers.length;
+            state.score += gained;
+            scoreEl.textContent = state.score;
+
+            state.level += 1;
+            levelEl.textContent = state.level;
+
+            recordRoundResult(true);
+
+            showMessage("Great!", "🎉");
+            setTimeout(() => {
+                hideMessage();
+                newRound();
+            }, 850);
+        }
+
+        function handleMistake(reason) {
+            state.acceptingInput = false;
+            clearTimer();
+            playWrongSound();
+
+            state.lives -= 1;
+            if (state.lives < 0) state.lives = 0;
+            updateLivesUI();
+
+            recordRoundResult(false);
+
+            if (state.lives <= 0) {
+                showMessage("Game over! Score: " + state.score, "💥");
+                setTimeout(() => {
+                    hideMessage();
+                    startGame();
+                }, 1600);
+            } else {
+                showMessage("New set!", "🔄");
+                setTimeout(() => {
+                    hideMessage();
+                    newRound();
+                }, 850);
+            }
+        }
+
+        function handleTimeout() {
+            if (!state.acceptingInput) return;
+            handleMistake("timeout");
+        }
+
+        function onBubbleClick(event) {
+            if (!state.acceptingInput) return;
+
+            const bubble = event.currentTarget;
+            const value = parseInt(bubble.dataset.value, 10);
+            const expected = state.expectedOrder[state.clickIndex];
+
+            if (value === expected) {
+                bubble.classList.add("correct", "disabled");
+                bubble.disabled = true;
+                playCorrectSound();
+
+                state.clickIndex += 1;
+
+                if (state.clickIndex >= state.expectedOrder.length) {
+                    endRoundSuccess();
+                }
+            } else {
+                bubble.classList.add("wrong");
+                handleMistake("wrong");
+            }
+        }
+
+        function newRound() {
+            state.round += 1;
+            hideMessage();
+            clearBubbles();
+            clearTimer();
+
+            // Decide bubble count: normal adaptive or special challenge
+            let count;
+            if (state.pendingChallenge) {
+                count = Math.min(state.challengeCount, 99);
+                state.pendingChallenge = false;
+            } else {
+                count = state.bubbleCount;
+            }
+
+            // Alternate mostly ascending with occasional descending
+            state.ascending = Math.random() < 0.7;
+
+            state.currentNumbers = generateNumbers(count);
+            state.expectedOrder = [...state.currentNumbers].sort((a, b) =>
+                state.ascending ? a - b : b - a
+            );
+            state.clickIndex = 0;
+
+            setOrderUI();
+            renderBubbles();
+
+            // Accept input & start adaptive timer
+            state.acceptingInput = true;
+            startTimerForRound(count);
+        }
+
+        function startGame() {
+            state.level = 1;
+            state.score = 0;
+            state.round = 0;
+            state.bubbleCount = 3;
+            state.baseTimePerBubbleMs = 1500;
+            state.lastTwoResults = [];
+            state.lives = 5;
+            state.pendingChallenge = false;
+
+            scoreEl.textContent = "0";
+            levelEl.textContent = "1";
+            updateLivesUI();
+            hideMessage();
+            clearTimer();
+            clearBubbles();
+
+            newRound();
+        }
+
+        // Start immediately when page loads
+        window.addEventListener("load", startGame);
+    </script>
+<!-- Google Sheets Data Collection -->
+<script>
+class GameDataCollector {
+  constructor(options = {}) {
+    this.webAppUrl = options.webAppUrl || "https://script.google.com/macros/s/AKfycbxiuQOpLc6jz6MlwCk3ZhQslpKmc83ozbkOHC5zueS3Q504UbJcGAAs3PwRhNjGfLhY/exec";
+    this.gameName = options.gameName || 'Unknown Game';
+    this.allowAnonymous = options.allowAnonymous !== false;
+    this.debug = options.debug || false;
+  }
+  
+  getPlayerId() {
+    if (!this.allowAnonymous) return 'anonymous';
+    let playerId = localStorage.getItem('iqualia_player_id');
+    if (!playerId) {
+      playerId = 'player_' + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem('iqualia_player_id', playerId);
+    }
+    return playerId;
+  }
+  
+  getDeviceInfo() {
+    const ua = navigator.userAgent;
+    let device = 'Desktop';
+    if (/iPhone|iPad|iPod/.test(ua)) device = 'Mobile-iOS';
+    else if (/Android/.test(ua)) device = 'Mobile-Android';
+    
+    let browser = 'Other';
+    if (/Chrome/.test(ua) && !/Chromium/.test(ua)) browser = 'Chrome';
+    else if (/Safari/.test(ua)) browser = 'Safari';
+    else if (/Firefox/.test(ua)) browser = 'Firefox';
+    else if (/Edge/.test(ua)) browser = 'Edge';
+    
+    return {device, browser};
+  }
+  
+  async submitGameData(gameData) {
+    try {
+      const formData = new FormData();
+      formData.append('timestamp', new Date().toISOString());
+      formData.append('game_name', this.gameName);
+      formData.append('player_id', this.getPlayerId());
+      formData.append('score', gameData.score || 0);
+      formData.append('time_spent', gameData.time_spent || 0);
+      formData.append('attempts', gameData.attempts || 0);
+      formData.append('result', gameData.result || 'completed');
+      formData.append('device', this.getDeviceInfo().device);
+      
+      if (this.debug) console.log('Submitting FormData');
+      
+      const response = await fetch(this.webAppUrl, {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (this.debug) console.log('✓ Data submitted successfully');
+      return {success: true};
+    } catch (e) {
+      console.error('Data submission error:', e);
+      return {success: false, error: e.message};
+    }
+  }
+}
+
+// Initialize collector for this game
+const gameCollector = new GameDataCollector({
+  gameName: document.title || 'Game',
+  debug: false
+});
+
+// Log when page loads
+if (gameCollector.debug) {
+  console.log('Data collector ready for:', gameCollector.gameName);
+  console.log('Web App URL:', gameCollector.webAppUrl);
+}
+</script>
+
+</body>
+</html>

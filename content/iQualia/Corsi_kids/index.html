@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MemoSpace: Pattern Quest</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #1a1a2e;
+            color: #fff;
+            overflow-x: hidden;
+            touch-action: manipulation; /* Prevent double-tap zoom */
+            user-select: none;
+        }
+        .title-font {
+            font-family: 'Fredoka One', cursive;
+        }
+        .game-grid {
+            display: grid;
+            gap: 1rem;
+            transition: all 0.3s ease;
+        }
+        .tile {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            cursor: pointer;
+            transition: transform 0.1s, background-color 0.2s, box-shadow 0.2s;
+            aspect-ratio: 1;
+            border: 4px solid rgba(255,255,255,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        .tile:active {
+            transform: scale(0.95);
+        }
+        .tile.active {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px currentColor;
+            border-color: white;
+            z-index: 10;
+        }
+        /* Custom Animations */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .shake {
+            animation: shake 0.4s ease-in-out;
+        }
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        /* Success Pop Animation */
+        .pop-success {
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-gray-900 via-indigo-900 to-purple-900 text-white p-4">
+
+    <!-- Setup / Intro Screen -->
+    <div id="intro-screen" class="w-full max-w-md bg-white/10 backdrop-blur-lg rounded-2xl p-8 shadow-2xl text-center border border-white/10">
+        <div class="mb-6 text-6xl floating">🚀</div>
+        <h1 class="text-4xl title-font mb-2 text-yellow-400 tracking-wider">MemoSpace</h1>
+        <p class="text-blue-200 mb-6 font-bold">Pattern Recognition Protocol</p>
+        
+        <div class="space-y-5">
+            <div class="text-left bg-black/20 p-5 rounded-xl border border-white/5">
+                <label class="block text-sm font-bold mb-3 text-blue-300 uppercase tracking-widest">Select Pilot Age</label>
+                <div class="flex gap-3 justify-center">
+                    <button onclick="selectAge('6-8')" class="age-btn flex-1 py-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 transition font-bold border-4 border-transparent focus:border-white shadow-lg text-lg" data-age="6-8">6-8</button>
+                    <button onclick="selectAge('9-12')" class="age-btn flex-1 py-4 rounded-xl bg-purple-600 hover:bg-purple-500 transition font-bold border-4 border-transparent focus:border-white shadow-lg text-lg" data-age="9-12">9-12</button>
+                </div>
+            </div>
+            
+            <button id="start-btn" onclick="startGame()" disabled class="w-full py-4 bg-green-500 hover:bg-green-400 disabled:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl text-2xl title-font shadow-xl transform transition active:scale-95 text-white border-b-4 border-green-700 hover:border-green-600">
+                START MISSION
+            </button>
+            
+            <p class="text-xs text-gray-400 mt-4">
+                Session data is logged for analysis.
+                <br><span onclick="toggleResearcherLogin()" class="underline cursor-pointer hover:text-white transition-colors">Researcher Access</span>
+            </p>
+        </div>
+    </div>
+
+    <!-- Game HUD & Board -->
+    <div id="game-screen" class="hidden w-full max-w-2xl flex flex-col items-center relative">
+        
+        <!-- HUD -->
+        <div class="flex justify-between items-center w-full mb-6 bg-black/40 p-4 rounded-2xl backdrop-blur-sm border border-white/10 shadow-xl gap-4">
+            <!-- Level & Lives Group -->
+            <div class="flex items-center gap-4">
+                <div class="text-center">
+                    <div class="text-[10px] text-blue-400 uppercase tracking-widest font-bold">Level</div>
+                    <div id="level-display" class="text-3xl title-font text-white drop-shadow-md">1</div>
+                </div>
+                <div class="w-px h-10 bg-white/20"></div>
+                <div class="text-center">
+                    <div class="text-[10px] text-red-400 uppercase tracking-widest font-bold">Lives</div>
+                    <div id="lives-display" class="text-2xl title-font text-white drop-shadow-md tracking-widest">❤️❤️</div>
+                </div>
+            </div>
+
+            <!-- Message Area -->
+            <div class="flex-1 text-center mx-2">
+                <div id="message-display" class="text-xl font-bold text-yellow-300 tracking-wide drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">Watch...</div>
+            </div>
+
+            <!-- Score -->
+            <div class="text-center">
+                <div class="text-[10px] text-green-400 uppercase tracking-widest font-bold">Score</div>
+                <div id="score-display" class="text-3xl title-font text-white drop-shadow-md">0</div>
+            </div>
+        </div>
+
+        <!-- Grid -->
+        <div class="relative w-full max-w-[400px] aspect-square">
+             <div id="grid-container" class="game-grid grid grid-cols-2 gap-3 w-full h-full p-4 bg-black/20 rounded-3xl shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)] border border-white/5">
+                <!-- Tiles generated by JS -->
+            </div>
+        </div>
+
+        <!-- Visual Progress/Timer Bar (Decorative) -->
+        <div class="w-full max-w-[400px] mt-6 h-2 bg-gray-800 rounded-full overflow-hidden">
+            <div id="progress-bar" class="h-full bg-gradient-to-r from-green-400 to-blue-500 w-full opacity-50"></div>
+        </div>
+    </div>
+
+    <!-- Success Overlay -->
+    <div id="success-modal" class="hidden fixed inset-0 z-40 flex items-center justify-center bg-black/40 backdrop-blur-sm pointer-events-none">
+        <div class="text-center pop-success">
+            <div class="text-8xl mb-2 drop-shadow-[0_0_25px_rgba(250,204,21,0.8)] animate-bounce">🌟</div>
+            <h2 class="text-7xl title-font text-yellow-300 drop-shadow-lg text-stroke tracking-wider">COMPLETE!</h2>
+            <p class="text-white font-bold text-2xl mt-4 drop-shadow-md bg-black/20 px-6 py-2 rounded-full backdrop-blur">Sequence Correct</p>
+        </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="game-over-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4">
+        <div class="bg-gray-800 border-2 border-purple-500 rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl transform transition-all">
+            <div class="text-6xl mb-4 floating">🛸</div>
+            <h2 class="text-3xl title-font text-white mb-2">Mission Complete!</h2>
+            <p class="text-gray-300 mb-8 text-lg">Great pattern matching, Pilot!</p>
+            
+            <div class="bg-black/30 rounded-xl p-5 mb-8 space-y-3 border border-white/5">
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-400 text-sm uppercase tracking-wider">Max Sequence</span>
+                    <span id="final-level" class="text-2xl text-green-400 font-bold title-font">0</span>
+                </div>
+                <div class="w-full h-px bg-white/10"></div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-400 text-sm uppercase tracking-wider">Avg Reaction</span>
+                    <span id="final-reaction" class="text-xl text-blue-400 font-bold font-mono">0ms</span>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <button onclick="resetGame()" class="w-full py-4 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold text-lg shadow-lg transition transform active:scale-95">Play Again</button>
+                <button onclick="location.reload()" class="w-full py-4 bg-gray-700 hover:bg-gray-600 rounded-xl font-bold text-sm transition">Exit to Menu</button>
+            </div>
+            <div id="save-status" class="text-xs mt-4 text-gray-500 italic">Syncing research data...</div>
+        </div>
+    </div>
+
+    <!-- Researcher Dashboard -->
+    <div id="researcher-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-md p-4">
+        <div class="bg-gray-50 text-gray-900 rounded-2xl w-full max-w-4xl h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center bg-white">
+                <div>
+                    <h2 class="text-2xl font-bold text-indigo-900 flex items-center gap-2">
+                        📊 Researcher Dashboard
+                    </h2>
+                    <p class="text-xs text-gray-500 font-mono mt-1">PROJECT: MEMOSPACE_ALPHA_01</p>
+                </div>
+                <button onclick="closeResearcher()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-100 hover:text-red-600 transition font-bold text-xl">&times;</button>
+            </div>
+            
+            <div class="p-6 flex-1 overflow-auto bg-gray-50">
+                <!-- Auth -->
+                <div id="researcher-auth" class="text-center py-20">
+                    <div class="bg-white p-8 rounded-2xl shadow-sm inline-block max-w-sm w-full">
+                        <h3 class="text-lg font-bold mb-4 text-gray-700">Restricted Access</h3>
+                        <div class="flex gap-2">
+                            <input type="password" id="admin-pass" placeholder="Passcode" class="flex-1 border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                            <button onclick="authenticateResearcher()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-bold transition">Login</button>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-4">Hint: The code is <code class="bg-gray-100 px-1 rounded">admin</code></p>
+                    </div>
+                </div>
+
+                <!-- Data View -->
+                <div id="researcher-data" class="hidden h-full flex flex-col">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 shrink-0">
+                        <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                            <div class="text-3xl font-bold text-blue-600" id="stat-sessions">0</div>
+                            <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Subjects</div>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                            <div class="text-3xl font-bold text-green-600" id="stat-avg-level">0.0</div>
+                            <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Avg Max Level</div>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                            <div class="text-3xl font-bold text-purple-600" id="stat-reaction">0ms</div>
+                            <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">Avg Reaction</div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-end mb-3 shrink-0">
+                        <h3 class="font-bold text-gray-700">Session Logs</h3>
+                        <button onclick="refreshData()" class="text-sm text-indigo-600 hover:text-indigo-800 font-bold flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                            Refresh
+                        </button>
+                    </div>
+
+                    <div class="flex-1 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+                        <div class="overflow-auto flex-1">
+                            <table class="w-full text-sm text-left text-gray-600">
+                                <thead class="text-xs text-gray-400 uppercase bg-gray-50 sticky top-0">
+                                    <tr>
+                                        <th class="px-6 py-3 font-bold">Time</th>
+                                        <th class="px-6 py-3 font-bold">Cohort (Age)</th>
+                                        <th class="px-6 py-3 font-bold">Seq. Len</th>
+                                        <th class="px-6 py-3 font-bold">Reaction</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="data-table-body" class="divide-y divide-gray-100">
+                                    <!-- Rows injected here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase & Game Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        // --- 1. Configuration ---
+        let app, db, auth, appId;
+        let isOffline = false;
+
+        try {
+             if(typeof __firebase_config === 'undefined') throw new Error("No Config");
+             const firebaseConfig = JSON.parse(__firebase_config);
+             app = initializeApp(firebaseConfig);
+             db = getFirestore(app);
+             auth = getAuth(app);
+             appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+             
+             // Init Auth
+            const initAuth = async () => {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            };
+            initAuth();
+
+        } catch (e) {
+            console.log("Offline Mode");
+            isOffline = true;
+        }
+
+        const DATA_COLLECTION = 'research_sessions'; 
+        const getCollectionRef = () => isOffline ? null : collection(db, 'artifacts', appId, 'public', 'data', DATA_COLLECTION);
+
+        let currentUser = null;
+        if(!isOffline) {
+            onAuthStateChanged(auth, (user) => {
+                currentUser = user;
+                if(user && !document.getElementById('researcher-data').classList.contains('hidden')){
+                    refreshData();
+                }
+            });
+        }
+
+        // --- 2. Audio System (Web Audio API) ---
+        class AudioController {
+            constructor() {
+                this.ctx = null;
+                try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
+                this.masterGain = this.ctx ? this.ctx.createGain() : null;
+                if(this.masterGain) {
+                    this.masterGain.gain.value = 0.3; 
+                    this.masterGain.connect(this.ctx.destination);
+                }
+            }
+
+            ensureContext() {
+                if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+            }
+
+            playTone(freq, type = 'sine', duration = 0.3) {
+                if (!this.ctx) return;
+                this.ensureContext();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                
+                gain.gain.setValueAtTime(0, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(1, this.ctx.currentTime + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                
+                osc.connect(gain);
+                gain.connect(this.masterGain);
+                
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            }
+
+            playSuccess() {
+                this.playTone(523.25, 'triangle', 0.1); // C5
+                setTimeout(() => this.playTone(659.25, 'triangle', 0.1), 100); // E5
+                setTimeout(() => this.playTone(783.99, 'triangle', 0.3), 200); // G5
+            }
+
+            playError() {
+                this.playTone(150, 'sawtooth', 0.4);
+                this.playTone(100, 'sawtooth', 0.4);
+            }
+        }
+        const audio = new AudioController();
+
+        // --- 3. Game State ---
+        let state = {
+            isPlaying: false,
+            sequence: [],
+            playerInput: [],
+            level: 1,
+            score: 0,
+            lives: 2,
+            ageGroup: null,
+            gridSize: 2, 
+            canClick: false,
+            reactionStats: [], 
+            lastStimulusTime: 0,
+            sessionStartTime: 0
+        };
+
+        const TILE_COLORS = [
+            { bg: 'bg-red-500', border: 'border-red-400', freq: 261.63 },
+            { bg: 'bg-blue-500', border: 'border-blue-400', freq: 329.63 },
+            { bg: 'bg-green-500', border: 'border-green-400', freq: 392.00 },
+            { bg: 'bg-yellow-500', border: 'border-yellow-400', freq: 523.25 },
+            { bg: 'bg-purple-500', border: 'border-purple-400', freq: 440.00 },
+            { bg: 'bg-pink-500', border: 'border-pink-400', freq: 493.88 },
+            { bg: 'bg-orange-500', border: 'border-orange-400', freq: 587.33 },
+            { bg: 'bg-teal-500', border: 'border-teal-400', freq: 659.25 },
+            { bg: 'bg-indigo-500', border: 'border-indigo-400', freq: 698.46 }
+        ];
+
+        // --- 4. UI Logic ---
+        window.selectAge = (age) => {
+            state.ageGroup = age;
+            document.querySelectorAll('.age-btn').forEach(btn => {
+                if(btn.dataset.age === age) {
+                    btn.classList.add('ring-4', 'ring-white', 'scale-105');
+                    btn.classList.remove('opacity-50');
+                } else {
+                    btn.classList.remove('ring-4', 'ring-white', 'scale-105');
+                    btn.classList.add('opacity-50');
+                }
+            });
+            document.getElementById('start-btn').disabled = false;
+            audio.playTone(800, 'sine', 0.1); // Feedback
+        };
+
+        window.startGame = () => {
+            audio.ensureContext();
+            audio.playTone(440, 'sine', 0.1);
+
+            document.getElementById('intro-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            document.getElementById('game-screen').classList.add('flex');
+            
+            state.sessionStartTime = Date.now();
+            resetGameState();
+            renderGrid();
+            setTimeout(nextLevel, 1000);
+        };
+
+        function resetGameState() {
+            state.level = 1;
+            state.score = 0;
+            state.lives = 2; // Reset lives
+            state.sequence = [];
+            state.playerInput = [];
+            state.reactionStats = [];
+            state.gridSize = state.ageGroup === '6-8' ? 2 : 2; 
+            updateHUD();
+        }
+
+        function updateHUD() {
+            document.getElementById('level-display').textContent = state.level;
+            document.getElementById('score-display').textContent = state.score;
+            document.getElementById('lives-display').textContent = '❤️'.repeat(Math.max(0, state.lives));
+            
+            if (state.level >= 5 && state.gridSize === 2) {
+                state.gridSize = 3;
+                renderGrid();
+            }
+        }
+
+        function renderGrid() {
+            const container = document.getElementById('grid-container');
+            container.innerHTML = '';
+            container.className = `game-grid grid grid-cols-${state.gridSize} gap-3 w-full h-full p-4 bg-black/20 rounded-3xl shadow-inner border border-white/5`;
+
+            const totalTiles = state.gridSize * state.gridSize;
+            for (let i = 0; i < totalTiles; i++) {
+                const tile = document.createElement('div');
+                const colorData = TILE_COLORS[i % TILE_COLORS.length];
+                
+                tile.className = `tile ${colorData.bg} ${colorData.border}`;
+                tile.dataset.index = i;
+                tile.dataset.freq = colorData.freq;
+                
+                tile.addEventListener('mousedown', (e) => { handleInput(i, tile); });
+                tile.addEventListener('touchstart', (e) => { e.preventDefault(); handleInput(i, tile); });
+
+                container.appendChild(tile);
+            }
+        }
+
+        async function nextLevel() {
+            state.playerInput = [];
+            state.canClick = false;
+            updateHUD();
+            setMessage("OBSERVE", "text-yellow-300");
+
+            const totalTiles = state.gridSize * state.gridSize;
+            state.sequence.push(Math.floor(Math.random() * totalTiles));
+
+            await playSequence();
+
+            state.canClick = true;
+            state.lastStimulusTime = Date.now();
+            setMessage("REPEAT", "text-green-400");
+        }
+
+        async function playSequence() {
+            const tiles = document.querySelectorAll('.tile');
+            const speed = Math.max(300, 800 - (state.level * 50));
+
+            await new Promise(r => setTimeout(r, 500));
+
+            for (let i = 0; i < state.sequence.length; i++) {
+                const index = state.sequence[i];
+                if(tiles[index]) {
+                    await highlightTile(tiles[index], speed);
+                    await new Promise(r => setTimeout(r, 100)); 
+                }
+            }
+        }
+
+        function highlightTile(tile, duration = 400) {
+            return new Promise(resolve => {
+                tile.classList.add('active');
+                audio.playTone(parseFloat(tile.dataset.freq));
+                
+                setTimeout(() => {
+                    tile.classList.remove('active');
+                    resolve();
+                }, duration);
+            });
+        }
+
+        async function handleInput(index, tile) {
+            if (!state.canClick) return;
+
+            tile.classList.add('active');
+            audio.playTone(parseFloat(tile.dataset.freq), 'sine', 0.1);
+            setTimeout(() => tile.classList.remove('active'), 150);
+
+            const currentStep = state.playerInput.length;
+            
+            if (index !== state.sequence[currentStep]) {
+                // ERROR
+                state.lives--;
+                updateHUD();
+                audio.playError();
+                
+                document.getElementById('grid-container').classList.add('shake');
+                setTimeout(() => document.getElementById('grid-container').classList.remove('shake'), 500);
+
+                if (state.lives <= 0) {
+                    gameOver();
+                } else {
+                    // RETRY
+                    state.canClick = false;
+                    setMessage("TRY AGAIN!", "text-red-400");
+                    state.playerInput = [];
+                    
+                    await new Promise(r => setTimeout(r, 1500));
+                    setMessage("WATCH AGAIN", "text-yellow-300");
+                    await playSequence();
+                    
+                    state.canClick = true;
+                    state.lastStimulusTime = Date.now();
+                    setMessage("YOUR TURN", "text-green-400");
+                }
+                return;
+            }
+
+            const now = Date.now();
+            const rt = now - state.lastStimulusTime;
+            state.reactionStats.push(rt);
+            state.lastStimulusTime = now;
+
+            state.playerInput.push(index);
+
+            if (state.playerInput.length === state.sequence.length) {
+                // SUCCESS
+                state.score += (state.level * 10);
+                state.level++;
+                state.canClick = false;
+                
+                // Play Audio Fanfare
+                audio.playSuccess();
+
+                // Show Success Overlay
+                const modal = document.getElementById('success-modal');
+                modal.classList.remove('hidden');
+                
+                // Wait and transition
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    nextLevel();
+                }, 1500);
+            }
+        }
+
+        function setMessage(text, colorClass) {
+            const el = document.getElementById('message-display');
+            el.textContent = text;
+            el.className = `text-xl font-bold animate-pulse ${colorClass} drop-shadow-md`;
+        }
+
+        function gameOver() {
+            state.canClick = false;
+            audio.playError();
+            document.getElementById('grid-container').classList.add('shake');
+            setTimeout(() => document.getElementById('grid-container').classList.remove('shake'), 500);
+
+            const avgReaction = state.reactionStats.length > 0 
+                ? Math.round(state.reactionStats.reduce((a,b) => a+b, 0) / state.reactionStats.length) 
+                : 0;
+
+            document.getElementById('final-level').textContent = state.sequence.length;
+            document.getElementById('final-reaction').textContent = `${avgReaction}ms`;
+            
+            saveData(avgReaction);
+            
+            setTimeout(() => {
+                document.getElementById('game-over-modal').classList.remove('hidden');
+            }, 800);
+        }
+
+        async function saveData(avgRT) {
+            const statusEl = document.getElementById('save-status');
+            statusEl.textContent = "Syncing research data...";
+            
+            if(isOffline || !auth.currentUser) {
+                statusEl.textContent = "Saving locally (Offline)";
+                return;
+            }
+
+            try {
+                const data = {
+                    sessionId: crypto.randomUUID(),
+                    timestamp: serverTimestamp(),
+                    ageGroup: state.ageGroup,
+                    maxLevel: state.level,
+                    score: state.score,
+                    avgReactionTimeMs: avgRT,
+                    sequenceLength: state.sequence.length,
+                    gridSizeReached: state.gridSize,
+                    livesLeft: state.lives,
+                    userAgent: navigator.userAgent
+                };
+
+                await addDoc(getCollectionRef(), data);
+                statusEl.textContent = "✅ Data uploaded to secure research cloud.";
+                statusEl.classList.remove('text-gray-500');
+                statusEl.classList.add('text-green-400');
+            } catch (e) {
+                console.error("Save error:", e);
+                statusEl.textContent = "⚠️ Error uploading data.";
+                statusEl.classList.add('text-red-400');
+            }
+        }
+
+        window.resetGame = () => {
+            document.getElementById('game-over-modal').classList.add('hidden');
+            resetGameState();
+            renderGrid();
+            setTimeout(nextLevel, 500);
+        };
+
+        window.toggleResearcherLogin = () => {
+            document.getElementById('researcher-modal').classList.remove('hidden');
+        };
+
+        window.closeResearcher = () => {
+            document.getElementById('researcher-modal').classList.add('hidden');
+        };
+
+        window.authenticateResearcher = () => {
+            const pass = document.getElementById('admin-pass').value;
+            if (pass === 'admin') {
+                document.getElementById('researcher-auth').classList.add('hidden');
+                document.getElementById('researcher-data').classList.remove('hidden');
+                refreshData();
+            } else {
+                const input = document.getElementById('admin-pass');
+                input.classList.add('border-red-500');
+                setTimeout(() => input.classList.remove('border-red-500'), 500);
+            }
+        };
+
+        window.refreshData = async () => {
+            if(isOffline) return;
+            const tableBody = document.getElementById('data-table-body');
+            tableBody.innerHTML = '<tr><td colspan="4" class="text-center p-8 text-gray-400">Fetching datasets...</td></tr>';
+
+            try {
+                const q = query(getCollectionRef(), orderBy('timestamp', 'desc'), limit(50));
+                const snapshot = await getDocs(q);
+                
+                let totalReaction = 0;
+                let totalLevel = 0;
+                let count = 0;
+                
+                let html = '';
+                snapshot.forEach(doc => {
+                    const d = doc.data();
+                    count++;
+                    totalReaction += d.avgReactionTimeMs || 0;
+                    totalLevel += d.maxLevel || 0;
+                    
+                    const date = d.timestamp ? new Date(d.timestamp.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--';
+                    const badgeColor = d.ageGroup === '6-8' ? 'bg-indigo-100 text-indigo-800' : 'bg-purple-100 text-purple-800';
+
+                    html += `
+                        <tr class="bg-white border-b hover:bg-gray-50 transition">
+                            <td class="px-6 py-4 whitespace-nowrap font-mono text-xs">${date}</td>
+                            <td class="px-6 py-4"><span class="${badgeColor} text-xs font-bold px-2.5 py-0.5 rounded-full">${d.ageGroup || '?'}</span></td>
+                            <td class="px-6 py-4 font-bold text-gray-800">${d.sequenceLength || 0}</td>
+                            <td class="px-6 py-4 font-mono text-xs">${d.avgReactionTimeMs || 0}ms</td>
+                        </tr>
+                    `;
+                });
+
+                if (count === 0) {
+                    html = '<tr><td colspan="4" class="text-center p-8 text-gray-400 italic">No research data collected yet.</td></tr>';
+                }
+
+                tableBody.innerHTML = html;
+                document.getElementById('stat-sessions').textContent = count;
+                document.getElementById('stat-avg-level').textContent = count ? (totalLevel / count).toFixed(1) : 0;
+                document.getElementById('stat-reaction').textContent = count ? Math.round(totalReaction / count) + 'ms' : '0ms';
+
+            } catch (e) {
+                tableBody.innerHTML = '<tr><td colspan="4" class="text-center p-8 text-red-400">Access Error.</td></tr>';
+            }
+        };
+    </script>
+</body>
+</html>

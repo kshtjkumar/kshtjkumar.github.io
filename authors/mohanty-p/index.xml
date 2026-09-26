@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Mohanty P | KSHITIJ KUMAR</title>
+    <link>http://localhost:3000/authors/mohanty-p/</link>
+      <atom:link href="http://localhost:3000/authors/mohanty-p/index.xml" rel="self" type="application/rss+xml" />
+    <description>Mohanty P</description>
+    <generator>Hugo Blox Builder (https://hugoblox.com)</generator><language>en-us</language><lastBuildDate>Sun, 01 Dec 2024 00:00:00 +0000</lastBuildDate>
+    <image>
+      <url>http://localhost:3000/media/icon_hu_729f4604415becdb.png</url>
+      <title>Mohanty P</title>
+      <link>http://localhost:3000/authors/mohanty-p/</link>
+    </image>
+    
+    <item>
+      <title>The effects of stress on working memory and decision-making in rats</title>
+      <link>http://localhost:3000/publication/conference-papers/paper-1/</link>
+      <pubDate>Sun, 01 Dec 2024 00:00:00 +0000</pubDate>
+      <guid>http://localhost:3000/publication/conference-papers/paper-1/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>

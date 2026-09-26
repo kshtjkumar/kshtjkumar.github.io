@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Magic Number Bubbles – Memory Mode</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+        :root {
+            --bg1: #6fd3ff;   /* soft bright blue */
+            --bg2: #b7f4c7;   /* soft bright green */
+            --panel: rgba(255, 255, 255, 0.16);
+            --panel-strong: rgba(255, 255, 255, 0.9);
+            --text-main: #000000;
+            --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont,
+                "Segoe UI", sans-serif;
+            color: var(--text-main);
+            background: radial-gradient(circle at top left, var(--bg1), var(--bg2));
+            min-height: 100vh;
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .game-wrapper {
+            width: 100%;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 10px;
+            display: flex;
+            align-items: stretch;
+        }
+
+        .game-container {
+            position: relative;
+            flex: 1;
+            border-radius: 24px;
+            background: linear-gradient(
+                145deg,
+                rgba(255, 255, 255, 0.2),
+                rgba(255, 255, 255, 0.06)
+            );
+            backdrop-filter: blur(18px);
+            box-shadow: var(--shadow-soft);
+            padding: 12px 16px 18px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* HUD / top bar */
+        .hud {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 8px;
+            color: var(--text-main);
+        }
+
+        .logo {
+            font-size: clamp(1.2rem, 2.4vw, 1.6rem);
+            font-weight: 800;
+            letter-spacing: 0.03em;
+            display: flex;
+            align-items: center;
+            gap: 0.35em;
+        }
+
+        .logo-emoji {
+            font-size: 1.4em;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
+        }
+
+        .hud-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .hud-item {
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: var(--panel);
+            font-size: clamp(0.8rem, 1.4vw, 0.95rem);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+            color: var(--text-main);
+        }
+
+        .hud-item span.value {
+            font-weight: 700;
+        }
+
+        /* Rule / phase row */
+        .rule-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 6px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: var(--panel);
+            font-size: clamp(0.85rem, 1.5vw, 1rem);
+            gap: 8px;
+            color: var(--text-main);
+        }
+
+        .rule-phase {
+            font-weight: 600;
+        }
+
+        .order-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .order-arrow {
+            font-size: 1.15em;
+        }
+
+        /* Play area */
+        .play-area {
+            flex: 1;
+            margin-top: 6px;
+            border-radius: 20px;
+            background: radial-gradient(
+                circle at bottom right,
+                rgba(255, 255, 255, 0.45),
+                rgba(255, 255, 255, 0.08)
+            );
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: stretch;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #bubbles-container {
+            flex: 1;
+            position: relative;
+        }
+
+        .bubble {
+            position: absolute;
+            border: none;
+            outline: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            color: #ffffff; /* number color on bubbles */
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+            transform: translate(-50%, -50%) scale(1);
+            transition:
+                transform 0.16s ease,
+                box-shadow 0.18s ease,
+                filter 0.18s ease,
+                opacity 0.18s ease;
+            font-size: 2.4rem;
+        }
+
+        .bubble:hover {
+            transform: translate(-50%, -54%) scale(1.05);
+            box-shadow: 0 14px 30px rgba(0, 0, 0, 0.4);
+            filter: brightness(1.05);
+        }
+
+        .bubble:active {
+            transform: translate(-50%, -46%) scale(0.96);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .bubble.memorize {
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.9),
+                        0 10px 25px rgba(0, 0, 0, 0.35);
+        }
+
+        .bubble.correct-selected {
+            animation: pop-correct 0.4s ease-out forwards;
+        }
+
+        .bubble.wrong-selected {
+            animation: shake-wrong 0.35s ease;
+        }
+
+        .bubble.disabled {
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        .bubble.burst {
+            animation: burst-away 0.5s ease forwards;
+        }
+
+        @keyframes pop-correct {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+            }
+            40% {
+                transform: translate(-50%, -56%) scale(1.18);
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(0.85);
+                opacity: 0.4;
+            }
+        }
+
+        @keyframes shake-wrong {
+            0% {
+                transform: translate(-50%, -50%);
+            }
+            20% {
+                transform: translate(calc(-50% - 8px), -50%);
+            }
+            40% {
+                transform: translate(calc(-50% + 8px), -50%);
+            }
+            60% {
+                transform: translate(calc(-50% - 6px), -50%);
+            }
+            80% {
+                transform: translate(calc(-50% + 6px), -50%);
+            }
+            100% {
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        @keyframes burst-away {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+            60% {
+                transform: translate(-50%, -52%) scale(1.3);
+                opacity: 0.9;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1.6);
+                opacity: 0;
+            }
+        }
+
+        /* Floating background orbs (purely decorative) */
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.14;
+            filter: blur(3px);
+            pointer-events: none;
+        }
+
+        .orb.orb-1 {
+            width: 200px;
+            height: 200px;
+            background: #ffb703;
+            top: -40px;
+            left: -40px;
+        }
+
+        .orb.orb-2 {
+            width: 260px;
+            height: 260px;
+            background: #9b5de5;
+            bottom: -80px;
+            right: -40px;
+        }
+
+        .orb.orb-3 {
+            width: 180px;
+            height: 180px;
+            background: #ff6b6b;
+            bottom: 10%;
+            left: -60px;
+        }
+
+        /* Feedback message overlay */
+        #message {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            opacity: 0;
+            transform: scale(0.9);
+            transition:
+                opacity 0.25s ease,
+                transform 0.25s ease;
+        }
+
+        #message.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .message-card {
+            padding: 10px 18px;
+            border-radius: 999px;
+            background: var(--panel-strong);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            font-size: clamp(1.1rem, 2.2vw, 1.5rem);
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-main);
+        }
+
+        .message-emoji {
+            font-size: 1.5em;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
+        }
+
+        .message-button {
+            margin-left: 10px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            background: #ffd166;
+            color: #000000;
+        }
+
+        /* Bottom hint */
+        .bottom-hint {
+            text-align: center;
+            margin-top: 4px;
+            font-size: clamp(0.7rem, 1.3vw, 0.9rem);
+            opacity: 0.9;
+            color: var(--text-main);
+        }
+
+        @media (max-width: 600px) {
+            .game-container {
+                border-radius: 0;
+                box-shadow: none;
+                padding: 10px;
+            }
+
+            .play-area {
+                border-radius: 16px;
+            }
+
+            .logo {
+                font-size: 1.2rem;
+            }
+
+            .bubble {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-wrapper">
+        <div class="game-container">
+            <div class="hud">
+                <div class="logo">
+                    <span class="logo-emoji">🧠</span>
+                    <span>Magic Number Bubbles – Memory</span>
+                </div>
+                <div class="hud-right">
+                    <div class="hud-item">
+                        ⭐ Score
+                        <span class="value" id="score">0</span>
+                    </div>
+                    <div class="hud-item">
+                        🏆 Level
+                        <span class="value" id="level">1</span>
+                    </div>
+                    <div class="hud-item">
+                        ❤️ Lives
+                        <span class="value" id="lives">5</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rule-row">
+                <span class="rule-phase" id="phase-text">Look at the bubbles…</span>
+                <span class="order-label" id="order-label" style="display:none;">
+                    <span class="order-arrow" id="order-arrow">⬆️</span>
+                    <span id="order-text">Small → Big</span>
+                </span>
+            </div>
+
+            <div class="play-area">
+                <!-- Decorative orbs -->
+                <div class="orb orb-1"></div>
+                <div class="orb orb-2"></div>
+                <div class="orb orb-3"></div>
+
+                <!-- Bubbles appear here -->
+                <div id="bubbles-container"></div>
+
+                <!-- Feedback message -->
+                <div id="message">
+                    <div class="message-card">
+                        <span class="message-emoji" id="message-emoji">🎉</span>
+                        <span id="message-text">Great memory!</span>
+                        <button class="message-button" id="restart-button" style="display:none;">
+                            Play again
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bottom-hint">
+                First: remember the bubbles. Then: tap the ones you saw in the right order.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Color palette for bubbles ---
+        const BUBBLE_COLORS = [
+            "#FFB703", // yellow-orange
+            "#FF6B6B", // coral red
+            "#9B5DE5", // purple
+            "#00B4D8", // bright cyan/blue
+            "#38B000"  // green
+        ];
+
+        const MAX_UNIQUE_DIGITS = 9; // 1–9
+        const MAX_MEMORIZE_COUNT = 7; // cap for WM load
+        const MIN_MEMORIZE_COUNT = 2;
+
+        const state = {
+            level: 1,
+            score: 0,
+            lives: 5,
+            difficulty: 1,
+            lastResults: [], // last 2 round outcomes (true/false)
+            phase: "memorize", // "memorize" | "recall"
+            memorizeNumbers: [],
+            recognitionBubbles: [], // {value, isTarget}
+            ascending: true,
+            expectedOrder: [],
+            clickIndex: 0,
+            acceptingInput: false,
+            round: 0,
+            gameOver: false
+        };
+
+        const scoreEl = document.getElementById("score");
+        const levelEl = document.getElementById("level");
+        const livesEl = document.getElementById("lives");
+        const bubblesContainer = document.getElementById("bubbles-container");
+        const phaseText = document.getElementById("phase-text");
+        const orderLabel = document.getElementById("order-label");
+        const orderArrow = document.getElementById("order-arrow");
+        const orderText = document.getElementById("order-text");
+        const messageOverlay = document.getElementById("message");
+        const messageText = document.getElementById("message-text");
+        const messageEmoji = document.getElementById("message-emoji");
+        const restartButton = document.getElementById("restart-button");
+
+        // --- Sound (pure Web Audio) ---
+        let audioCtx = null;
+        function getAudioContext() {
+            if (!audioCtx) {
+                const AudioContext =
+                    window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) {
+                    audioCtx = new AudioContext();
+                }
+            }
+            return audioCtx;
+        }
+
+        function playTone(freq, duration = 0.18) {
+            const ctx = getAudioContext();
+            if (!ctx) return;
+
+            const now = ctx.currentTime;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(freq, now);
+
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.exponentialRampToValueAtTime(0.25, now + 0.03);
+            gain.gain.exponentialRampToValueAtTime(
+                0.0001,
+                now + duration
+            );
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.start(now);
+            osc.stop(now + duration + 0.05);
+        }
+
+        function playCorrectSound() {
+            // Simple "happy" two-note chime
+            playTone(880, 0.14);
+            setTimeout(() => playTone(1175, 0.14), 120);
+        }
+
+        function playWrongSound() {
+            // Short "uh-oh" low tone
+            playTone(260, 0.25);
+        }
+
+        function playBurstSound() {
+            // Quick little up-gliss to mark the burst
+            playTone(700, 0.12);
+            setTimeout(() => playTone(950, 0.12), 90);
+        }
+
+        // --- Utility helpers ---
+        function randomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function shuffle(arr) {
+            const a = arr.slice();
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+
+        function showMessage(text, emoji, showRestart = false) {
+            messageText.textContent = text;
+            messageEmoji.textContent = emoji;
+            restartButton.style.display = showRestart ? "inline-flex" : "none";
+            messageOverlay.classList.add("visible");
+        }
+
+        function hideMessage() {
+            messageOverlay.classList.remove("visible");
+        }
+
+        function clearBubbles() {
+            bubblesContainer.innerHTML = "";
+        }
+
+        // Compute non-overlapping random layout for n bubbles
+        function computeBubbleLayout(count) {
+            const rect = bubblesContainer.getBoundingClientRect();
+            const width = rect.width || bubblesContainer.clientWidth || 400;
+            const height = rect.height || bubblesContainer.clientHeight || 300;
+
+            const positions = [];
+            const minRadius = Math.max(30, Math.min(width, height) / 15);
+            const maxRadius = Math.max(45, Math.min(width, height) / 9);
+            const minGap = 8;
+            const padding = 10;
+            const maxAttempts = 400;
+
+            for (let i = 0; i < count; i++) {
+                let placed = false;
+                let radius = randomInt(minRadius, maxRadius);
+                let attempt = 0;
+
+                while (!placed && attempt < maxAttempts) {
+                    attempt++;
+                    const x = randomInt(padding + radius, width - padding - radius);
+                    const y = randomInt(padding + radius, height - padding - radius);
+
+                    let ok = true;
+                    for (const p of positions) {
+                        const dx = x - p.x;
+                        const dy = y - p.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < radius + p.radius + minGap) {
+                            ok = false;
+                            break;
+                        }
+                    }
+
+                    if (ok) {
+                        positions.push({ x, y, radius });
+                        placed = true;
+                    }
+                }
+
+                if (!placed) {
+                    // Fallback: simple grid-ish placement, smaller radius
+                    const cols = Math.ceil(Math.sqrt(count));
+                    const rows = Math.ceil(count / cols);
+                    const cellW = (width - 2 * padding) / cols;
+                    const cellH = (height - 2 * padding) / rows;
+                    const gridRadius = Math.min(cellW, cellH) / 3;
+                    const col = i % cols;
+                    const row = Math.floor(i / cols);
+                    const x = padding + col * cellW + cellW / 2;
+                    const y = padding + row * cellH + cellH / 2;
+                    positions.push({ x, y, radius: gridRadius });
+                }
+            }
+
+            return positions;
+        }
+
+        // --- Difficulty logic ---
+        function getMemorizeCountForDifficulty() {
+            // base 2, grows with difficulty, capped
+            const base = MIN_MEMORIZE_COUNT;
+            const increment = Math.floor((state.difficulty - 1) / 2); // +1 every 2 difficulty steps
+            const count = base + increment;
+            return Math.max(
+                MIN_MEMORIZE_COUNT,
+                Math.min(count, MAX_MEMORIZE_COUNT)
+            );
+        }
+
+        function getTotalBubblesCount(memorizeCount) {
+            // We only have digits 1–9. We keep them unique, so max total is 9.
+            // Add a few distractors depending on difficulty, but not beyond 9.
+            const maxTotal = MAX_UNIQUE_DIGITS;
+            const extra = Math.min(3 + state.difficulty, maxTotal - memorizeCount);
+            return memorizeCount + Math.max(0, extra);
+        }
+
+        function updateDifficulty(lastRoundSuccess) {
+            state.lastResults.push(lastRoundSuccess);
+            if (state.lastResults.length > 2) {
+                state.lastResults.shift();
+            }
+
+            if (state.lastResults.length === 2) {
+                const [r1, r2] = state.lastResults;
+                if (r1 && r2) {
+                    state.difficulty += 1;
+                } else if (!r1 && !r2) {
+                    state.difficulty = Math.max(1, state.difficulty - 1);
+                }
+            }
+
+            // Level mirrors difficulty for now
+            state.level = state.difficulty;
+            levelEl.textContent = state.level;
+        }
+
+        // --- Rendering bubbles for a given phase ---
+        function renderMemorizeBubbles() {
+            clearBubbles();
+            const values = state.memorizeNumbers;
+            const layout = computeBubbleLayout(values.length);
+
+            values.forEach((num, index) => {
+                const bubble = document.createElement("div");
+                bubble.className = "bubble memorize";
+                bubble.textContent = num;
+                const color = BUBBLE_COLORS[index % BUBBLE_COLORS.length];
+                bubble.style.background = color;
+
+                const pos = layout[index];
+                bubble.style.width = bubble.style.height = pos.radius * 2 + "px";
+                bubble.style.left = pos.x + "px";
+                bubble.style.top = pos.y + "px";
+                bubble.style.fontSize = Math.max(24, pos.radius * 0.9) + "px";
+
+                // In memorize phase, bubbles are not clickable
+                bubblesContainer.appendChild(bubble);
+            });
+        }
+
+        function renderRecognitionBubbles() {
+            clearBubbles();
+            const items = state.recognitionBubbles;
+            const layout = computeBubbleLayout(items.length);
+
+            items.forEach((item, index) => {
+                const bubble = document.createElement("button");
+                bubble.className = "bubble";
+                bubble.textContent = item.value;
+                bubble.dataset.value = String(item.value);
+                bubble.dataset.target = item.isTarget ? "1" : "0";
+                bubble.dataset.index = String(index);
+
+                const color = BUBBLE_COLORS[index % BUBBLE_COLORS.length];
+                bubble.style.background = color;
+
+                const pos = layout[index];
+                bubble.style.width = bubble.style.height = pos.radius * 2 + "px";
+                bubble.style.left = pos.x + "px";
+                bubble.style.top = pos.y + "px";
+                bubble.style.fontSize = Math.max(24, pos.radius * 0.9) + "px";
+
+                bubble.addEventListener("click", onRecognitionBubbleClick);
+                bubblesContainer.appendChild(bubble);
+            });
+        }
+
+        // --- Game phases ---
+        function startMemorizePhase() {
+            state.phase = "memorize";
+            state.acceptingInput = false;
+            phaseText.textContent = "Look carefully and remember these numbers.";
+            orderLabel.style.display = "none";
+
+            // Decide ascending/descending for this round
+            state.ascending = Math.random() < 0.5;
+            state.expectedOrder = [...state.memorizeNumbers].sort((a, b) =>
+                state.ascending ? a - b : b - a
+            );
+
+            renderMemorizeBubbles();
+
+            // How long to show numbers (slightly adaptive to set size)
+            const memorizeTime =
+                1500 + state.memorizeNumbers.length * 400; // ms
+
+            setTimeout(() => {
+                burstMemorizeBubbles();
+            }, memorizeTime);
+        }
+
+        function burstMemorizeBubbles() {
+            const bubbles = Array.from(
+                bubblesContainer.querySelectorAll(".bubble.memorize")
+            );
+            if (bubbles.length === 0) {
+                startRecognitionPhase();
+                return;
+            }
+
+            bubbles.forEach((b, i) => {
+                setTimeout(() => {
+                    b.classList.add("burst");
+                    playBurstSound();
+                }, i * 60);
+            });
+
+            // After burst animation, go to recognition
+            setTimeout(() => {
+                startRecognitionPhase();
+            }, 600 + bubbles.length * 60);
+        }
+
+        function startRecognitionPhase() {
+            state.phase = "recall";
+            state.acceptingInput = true;
+            state.clickIndex = 0;
+
+            phaseText.textContent = "Tap the numbers you saw, in this order:";
+            orderLabel.style.display = "inline-flex";
+            if (state.ascending) {
+                orderArrow.textContent = "⬆️";
+                orderText.textContent = "Small → Big";
+            } else {
+                orderArrow.textContent = "⬇️";
+                orderText.textContent = "Big → Small";
+            }
+
+            // Build recognition set: targets + distractors
+            const memorizeSet = new Set(state.memorizeNumbers);
+            const memorizeCount = state.memorizeNumbers.length;
+            const totalBubbles = getTotalBubblesCount(memorizeCount);
+
+            const allDigits = [];
+            for (let d = 1; d <= 9; d++) allDigits.push(d);
+            const availableDistractors = allDigits.filter(
+                (d) => !memorizeSet.has(d)
+            );
+            const distractorCount = Math.min(
+                totalBubbles - memorizeCount,
+                availableDistractors.length
+            );
+
+            const distractors = shuffle(availableDistractors).slice(
+                0,
+                distractorCount
+            );
+
+            const recognitionValues = shuffle([
+                ...state.memorizeNumbers.map((v) => ({ value: v, isTarget: true })),
+                ...distractors.map((v) => ({ value: v, isTarget: false }))
+            ]);
+
+            state.recognitionBubbles = recognitionValues;
+            renderRecognitionBubbles();
+        }
+
+        function onRecognitionBubbleClick(event) {
+            if (!state.acceptingInput || state.phase !== "recall") return;
+
+            const bubble = event.currentTarget;
+            const value = parseInt(bubble.dataset.value, 10);
+            const isTarget = bubble.dataset.target === "1";
+            const expected = state.expectedOrder[state.clickIndex];
+
+            if (isTarget && value === expected) {
+                // Correct next item in sequence
+                bubble.classList.add("correct-selected", "disabled");
+                bubble.disabled = true;
+                playCorrectSound();
+                state.clickIndex++;
+
+                if (state.clickIndex >= state.expectedOrder.length) {
+                    // Round success
+                    handleRoundEnd(true);
+                }
+            } else {
+                // Wrong: either distractor, or correct target in wrong order
+                bubble.classList.add("wrong-selected");
+                playWrongSound();
+                handleMistake();
+            }
+        }
+
+        function handleMistake() {
+            state.acceptingInput = false;
+            state.lives -= 1;
+            livesEl.textContent = state.lives;
+
+            if (state.lives <= 0) {
+                handleGameOver();
+            } else {
+                // Round failed, but game continues
+                setTimeout(() => {
+                    handleRoundEnd(false);
+                }, 700);
+            }
+        }
+
+        function handleRoundEnd(success) {
+            state.acceptingInput = false;
+            state.round += 1;
+
+            if (success) {
+                const gained = 20 * state.memorizeNumbers.length;
+                state.score += gained;
+                scoreEl.textContent = state.score;
+                showMessage("Great memory!", "🎉", false);
+            } else if (state.lives > 0) {
+                showMessage("Nice try – new set!", "🔄", false);
+            }
+
+            updateDifficulty(success);
+
+            setTimeout(() => {
+                hideMessage();
+                if (!state.gameOver) {
+                    startNewRound();
+                }
+            }, 900);
+        }
+
+        function handleGameOver() {
+            state.gameOver = true;
+            state.acceptingInput = false;
+            showMessage("All lives used – game over!", "📚", true);
+        }
+
+        function startNewRound() {
+            if (state.gameOver) return;
+
+            clearBubbles();
+            state.phase = "memorize";
+            state.clickIndex = 0;
+
+            const memorizeCount = getMemorizeCountForDifficulty();
+
+            // Choose unique digits 1–9
+            const allDigits = [];
+            for (let d = 1; d <= 9; d++) allDigits.push(d);
+            const shuffled = shuffle(allDigits);
+            state.memorizeNumbers = shuffled.slice(0, memorizeCount);
+
+            startMemorizePhase();
+        }
+
+        function resetGame() {
+            state.level = 1;
+            state.score = 0;
+            state.lives = 5;
+            state.difficulty = 1;
+            state.lastResults = [];
+            state.round = 0;
+            state.gameOver = false;
+            state.phase = "memorize";
+            state.clickIndex = 0;
+
+            scoreEl.textContent = "0";
+            levelEl.textContent = "1";
+            livesEl.textContent = "5";
+
+            hideMessage();
+            startNewRound();
+        }
+
+        restartButton.addEventListener("click", () => {
+            resetGame();
+        });
+
+        // Start immediately when page loads
+        window.addEventListener("load", () => {
+            resetGame();
+        });
+    </script>
+<!-- Google Sheets Data Collection -->
+<script>
+class GameDataCollector {
+  constructor(options = {}) {
+    this.webAppUrl = options.webAppUrl || "https://script.google.com/macros/s/AKfycbxiuQOpLc6jz6MlwCk3ZhQslpKmc83ozbkOHC5zueS3Q504UbJcGAAs3PwRhNjGfLhY/exec";
+    this.gameName = options.gameName || 'Unknown Game';
+    this.allowAnonymous = options.allowAnonymous !== false;
+    this.debug = options.debug || false;
+  }
+  
+  getPlayerId() {
+    if (!this.allowAnonymous) return 'anonymous';
+    let playerId = localStorage.getItem('iqualia_player_id');
+    if (!playerId) {
+      playerId = 'player_' + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem('iqualia_player_id', playerId);
+    }
+    return playerId;
+  }
+  
+  getDeviceInfo() {
+    const ua = navigator.userAgent;
+    let device = 'Desktop';
+    if (/iPhone|iPad|iPod/.test(ua)) device = 'Mobile-iOS';
+    else if (/Android/.test(ua)) device = 'Mobile-Android';
+    
+    let browser = 'Other';
+    if (/Chrome/.test(ua) && !/Chromium/.test(ua)) browser = 'Chrome';
+    else if (/Safari/.test(ua)) browser = 'Safari';
+    else if (/Firefox/.test(ua)) browser = 'Firefox';
+    else if (/Edge/.test(ua)) browser = 'Edge';
+    
+    return {device, browser};
+  }
+  
+  async submitGameData(gameData) {
+    try {
+      const formData = new FormData();
+      formData.append('timestamp', new Date().toISOString());
+      formData.append('game_name', this.gameName);
+      formData.append('player_id', this.getPlayerId());
+      formData.append('score', gameData.score || 0);
+      formData.append('time_spent', gameData.time_spent || 0);
+      formData.append('attempts', gameData.attempts || 0);
+      formData.append('result', gameData.result || 'completed');
+      formData.append('device', this.getDeviceInfo().device);
+      
+      if (this.debug) console.log('Submitting FormData');
+      
+      const response = await fetch(this.webAppUrl, {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (this.debug) console.log('✓ Data submitted successfully');
+      return {success: true};
+    } catch (e) {
+      console.error('Data submission error:', e);
+      return {success: false, error: e.message};
+    }
+  }
+}
+
+// Initialize collector for this game
+const gameCollector = new GameDataCollector({
+  gameName: document.title || 'Game',
+  debug: false
+});
+
+// Log when page loads
+if (gameCollector.debug) {
+  console.log('Data collector ready for:', gameCollector.gameName);
+  console.log('Web App URL:', gameCollector.webAppUrl);
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Magical Treehouse: Winter Run</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;900&display=swap');
+
+        body { margin: 0; overflow: hidden; background-color: #dbeafe; font-family: 'Nunito', sans-serif; }
+        
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 20px;
+            z-index: 10;
+        }
+
+        .hud-panel {
+            background: rgba(255, 255, 255, 0.9);
+            border-bottom: 5px solid #bfdbfe;
+            padding: 10px 25px;
+            border-radius: 15px;
+            color: #334155;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            min-width: 120px;
+            text-align: center;
+            pointer-events: auto;
+        }
+        .label { font-size: 0.8rem; font-weight: 900; color: #94a3b8; margin-bottom: 0px; letter-spacing: 1px; }
+        .value { font-size: 2rem; font-weight: 900; color: #2563eb; line-height: 1; }
+
+        #status-bar {
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            display: flex; align-items: center; gap: 15px;
+            z-index: 20;
+        }
+
+        #lives-panel {
+            font-size: 3rem; text-shadow: 0 4px 0 rgba(0,0,0,0.1); letter-spacing: 5px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        }
+
+        #inventory-panel {
+            background: rgba(255, 255, 255, 0.95);
+            border: 4px solid #fff;
+            border-bottom: 4px solid #bfdbfe;
+            padding: 5px 20px;
+            border-radius: 20px;
+            min-width: 180px;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 2.5rem;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            transition: opacity 0.3s, transform 0.3s;
+        }
+        #inventory-panel.hidden { opacity: 0; transform: translateY(-20px); pointer-events: none; }
+        .inv-item { display: inline-block; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes popIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+
+        #center-msg {
+            position: absolute; top: 25%; width: 100%; text-align: center;
+            font-size: 2.5rem; color: #1e3a8a; font-weight: 900;
+            text-shadow: 2px 2px 0 #bfdbfe;
+            transition: transform 0.3s;
+            transform: scale(0);
+        }
+        #center-msg.visible { transform: scale(1); }
+
+        .menu {
+            position: absolute; inset: 0; 
+            background: rgba(219, 234, 254, 0.95);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 50; transition: opacity 0.3s; pointer-events: auto;
+        }
+        .menu.hidden { opacity: 0; pointer-events: none; }
+
+        h1 { font-size: 4rem; color: #1e3a8a; margin-bottom: 1rem; text-shadow: 3px 3px 0 #fff; font-weight: 900; }
+        p { color: #334155; font-size: 1.2rem; max-width: 600px; text-align: center; margin-bottom: 2rem; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 0 #bfdbfe; }
+
+        button {
+            background: #3b82f6;
+            border: none; border-bottom: 6px solid #1d4ed8;
+            padding: 20px 60px; border-radius: 50px;
+            color: white; font-family: 'Nunito', sans-serif; font-size: 1.8rem; font-weight: 900;
+            cursor: pointer; transition: transform 0.1s;
+        }
+        button:hover { transform: translateY(-2px); filter: brightness(1.1); }
+        button:active { transform: translateY(4px); border-bottom: 0px solid transparent; }
+
+        #download-btn {
+            position: absolute; bottom: 30px; right: 30px;
+            background: #ffffff; border-bottom: 4px solid #ccc;
+            color: #333; font-size: 1rem; padding: 12px 30px;
+            pointer-events: auto; font-weight: bold; border-radius: 10px;
+        }
+
+        #mobile-controls {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            display: none; gap: 15px; pointer-events: auto; z-index: 30;
+        }
+        .control-btn {
+            width: 70px; height: 70px; border-radius: 50%;
+            background: rgba(255,255,255,0.9); border: 4px solid #3b82f6;
+            font-size: 2rem; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; user-select: none; box-shadow: 0 4px 0 #1d4ed8;
+        }
+        .control-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #1d4ed8; }
+
+        #loader {
+            position: absolute; inset: 0; background: #dbeafe; z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+            color: #1e3a8a; font-size: 2rem; font-weight: 900;
+        }
+
+        @media (max-width: 600px) {
+            .hud-panel { min-width: 80px; padding: 5px 15px; }
+            .value { font-size: 1.5rem; }
+            #inventory-panel { min-width: 120px; font-size: 2rem; }
+            h1 { font-size: 3rem; }
+            #mobile-controls { display: flex; }
+            #download-btn { bottom: 120px; font-size: 0.8rem; padding: 8px 20px; }
+        }
+    </style>
+    
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+</head>
+<body>
+
+    <div id="loader">LOADING WINTER WORLD...</div>
+
+    <div id="ui-layer">
+        <div style="display: flex; justify-content: space-between;">
+            <div class="hud-panel">
+                <div class="label">SCORE</div>
+                <div class="value" id="score">0</div>
+            </div>
+            <div class="hud-panel">
+                <div class="label">ITEMS</div>
+                <div class="value" id="level">1</div>
+            </div>
+        </div>
+        
+        <div id="status-bar">
+            <div id="lives-panel">❤️❤️❤️❤️❤️</div>
+            <div id="inventory-panel"></div>
+        </div>
+
+        <div id="center-msg">WATCH!</div>
+        <button id="download-btn" onclick="game.downloadData()">Save Progress</button>
+        
+        <div id="mobile-controls">
+            <div class="control-btn" ontouchstart="game.moveLeft()">⬅️</div>
+            <div class="control-btn" ontouchstart="game.jump()">⬆️</div>
+            <div class="control-btn" ontouchstart="game.moveRight()">➡️</div>
+        </div>
+    </div>
+
+    <div id="start-menu" class="menu">
+        <h1>Winter Runner</h1>
+        <p>1. Collect items to fill your inventory.<br>2. <b>WIND</b> removes items, <b>MAGIC</b> adds them.<br>3. Recall the NEW sequence correctly!<br><br>Start with <b>1 ITEM</b>, progress to <b>8 ITEMS</b>. You have <b>5 LIVES</b>. Good luck!</p>
+        <button onclick="game.start()">PLAY NOW</button>
+    </div>
+
+    <div id="game-over" class="menu hidden">
+        <h1 style="color:#ef4444;">Game Over</h1>
+        <p>Score: <span id="final-score" style="color:#3b82f6; font-weight:900;">0</span><br>Max Sequence: <span id="final-level" style="color:#1e3a8a; font-weight:900;">1</span><br>Best Score: <span id="best-score" style="color:#10b981; font-weight:900;">0</span><br><br><small id="high-score-msg" style="display: none; color:#10b981; font-weight:900;">🎉 NEW HIGH SCORE! 🎉</small></p>
+        <button onclick="game.start()">TRY AGAIN</button>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+
+        // --- CONFIG ---
+        const CONFIG = {
+            LANE_WIDTH: 4,
+            MAX_LANES: 3,
+            GRAVITY: 0.025,
+            JUMP_VELOCITY: 0.35,
+            BASE_SPEED: 0.3,
+            MAX_SPEED: 1.2,
+            SPEED_INCREMENT: 0.04,
+            STARTING_LIVES: 5,
+            MAX_SEQUENCE_LENGTH: 8,
+            ITEM_SPACING: 15,
+            GATE_SPACING: 30,
+            SNOW_PARTICLES_DESKTOP: 500,
+            SNOW_PARTICLES_MOBILE: 200,
+            INPUT_DELAY: 100,
+            COLLISION_COOLDOWN: 100,
+            MAX_DELTA_TIME: 0.1,
+            MAX_DATA_LOG_SIZE: 100
+        };
+
+        const DEBUG = false;
+
+        // --- SAFE STORAGE WRAPPER ---
+        const SafeStorage = {
+            get(key, defaultValue = null) {
+                try {
+                    const value = localStorage.getItem(key);
+                    return value ? JSON.parse(value) : defaultValue;
+                } catch (e) {
+                    console.warn('Storage get failed:', e);
+                    return defaultValue;
+                }
+            },
+            
+            set(key, value) {
+                try {
+                    localStorage.setItem(key, JSON.stringify(value));
+                    return true;
+                } catch (e) {
+                    if (e.name === 'QuotaExceededError') {
+                        console.warn('Storage quota exceeded, clearing');
+                        try {
+                            localStorage.clear();
+                            localStorage.setItem(key, JSON.stringify(value));
+                            return true;
+                        } catch (e2) {
+                            console.error('Storage still failing:', e2);
+                            return false;
+                        }
+                    }
+                    console.error('Storage set failed:', e);
+                    return false;
+                }
+            }
+        };
+
+        const isMobile = /Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        const SNOW_COUNT = isMobile ? CONFIG.SNOW_PARTICLES_MOBILE : CONFIG.SNOW_PARTICLES_DESKTOP;
+
+        // --- SCENE SETUP ---
+        const scene = new THREE.Scene();
+        const SKY_COLOR = 0xdbeafe;
+        scene.background = new THREE.Color(SKY_COLOR);
+        scene.fog = new THREE.Fog(SKY_COLOR, 30, 90);
+
+        const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 5, 12);
+        camera.lookAt(0, 0, -5);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: !isMobile });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = !isMobile;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.body.appendChild(renderer.domElement);
+
+        const clock = new THREE.Clock();
+
+        // --- SNOW ---
+        const snowGeometry = new THREE.BufferGeometry();
+        const snowPositions = new Float32Array(SNOW_COUNT * 3);
+        for (let i = 0; i < SNOW_COUNT * 3; i += 3) {
+            snowPositions[i] = (Math.random() - 0.5) * 30;
+            snowPositions[i + 1] = Math.random() * 20 + 10;
+            snowPositions[i + 2] = (Math.random() - 0.5) * 30 - 20;
+        }
+        snowGeometry.setAttribute('position', new THREE.BufferAttribute(snowPositions, 3));
+        const snowMaterial = new THREE.PointsMaterial({ 
+            color: 0xffffff, 
+            size: 0.2,
+            transparent: true, 
+            opacity: 0.5
+        });
+        const snow = new THREE.Points(snowGeometry, snowMaterial);
+        scene.add(snow);
+
+        // --- LIGHTING ---
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.8);
+        scene.add(hemiLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        dirLight.position.set(15, 30, 10);
+        if (!isMobile) {
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 2048;
+            dirLight.shadow.mapSize.height = 2048;
+            dirLight.shadow.bias = -0.0005;
+        }
+        scene.add(dirLight);
+
+        // --- MATERIALS ---
+        const mats = {
+            red: new THREE.MeshToonMaterial({ color: 0xff4444 }),
+            blue: new THREE.MeshToonMaterial({ color: 0x3b82f6 }),
+            yellow: new THREE.MeshToonMaterial({ color: 0xfbbf24 }),
+            green: new THREE.MeshToonMaterial({ color: 0x22c55e }),
+            purple: new THREE.MeshToonMaterial({ color: 0xa855f7 }),
+            white: new THREE.MeshToonMaterial({ color: 0xffffff }),
+            wood: new THREE.MeshToonMaterial({ color: 0x5d4037 }),
+            leaf: new THREE.MeshToonMaterial({ color: 0x15803d }),
+            gold: new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.4, roughness: 0.3 }),
+            glass: new THREE.MeshPhysicalMaterial({ color: 0xaaddff, transmission: 0.9, opacity: 0.6, transparent: true, roughness: 0, metalness: 0.1 }),
+            
+            portalPink: new THREE.MeshBasicMaterial({ color: 0xff69b4, transparent: true, opacity: 0.3 }),
+            portalBlue: new THREE.MeshBasicMaterial({ color: 0x00bfff, transparent: true, opacity: 0.3 }),
+            portalYellow: new THREE.MeshBasicMaterial({ color: 0xffd700, transparent: true, opacity: 0.3 }),
+            
+            framePink: new THREE.MeshToonMaterial({ color: 0xff69b4 }),
+            frameBlue: new THREE.MeshToonMaterial({ color: 0x00bfff }),
+            frameYellow: new THREE.MeshToonMaterial({ color: 0xffd700 }),
+            
+            glowGreen: new THREE.MeshBasicMaterial({ color: 0x22c55e, transparent: true, opacity: 0.6 }),
+            glowRed: new THREE.MeshBasicMaterial({ color: 0xef4444, transparent: true, opacity: 0.6 }),
+            
+            snow: new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 }),
+            ice: new THREE.MeshStandardMaterial({ color: 0xe0f7fa, roughness: 0.2, metalness: 0.1 }),
+        };
+
+        // --- ITEM DEFINITIONS ---
+        const ITEM_DEFS = [
+            { id: 'MUSHROOM', name: 'Mushroom', icon: '🍄' },
+            { id: 'STAR', name: 'Star', icon: '⭐' },
+            { id: 'GEM', name: 'Gem', icon: '💎' },
+            { id: 'POTION', name: 'Potion', icon: '🧪' },
+            { id: 'COIN', name: 'Coin', icon: '🪙' }
+        ];
+
+        function create3DItem(type) {
+            const group = new THREE.Group();
+            let mesh;
+
+            if (type === 'MUSHROOM') {
+                const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.35, 0.6, 12), mats.white);
+                stem.position.y = 0.3;
+                const cap = new THREE.Mesh(new THREE.SphereGeometry(0.6, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2), mats.red);
+                cap.position.y = 0.5;
+                const d1 = new THREE.Mesh(new THREE.SphereGeometry(0.15), mats.white); d1.position.set(0.3, 0.9, 0.2);
+                const d2 = new THREE.Mesh(new THREE.SphereGeometry(0.12), mats.white); d2.position.set(-0.4, 0.8, 0.1);
+                group.add(stem, cap, d1, d2);
+            } else if (type === 'STAR') {
+                const geo = new THREE.IcosahedronGeometry(0.6, 0);
+                mesh = new THREE.Mesh(geo, mats.gold);
+                mesh.position.y = 0.6;
+                group.add(mesh);
+            } else if (type === 'GEM') {
+                mesh = new THREE.Mesh(new THREE.OctahedronGeometry(0.5, 0), mats.blue);
+                mesh.position.y = 0.5;
+                group.add(mesh);
+            } else if (type === 'POTION') {
+                const bottle = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.6, 16), mats.glass);
+                bottle.position.y = 0.3;
+                const liquid = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 0.4, 12), mats.purple);
+                liquid.position.y = 0.2;
+                const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.3, 12), mats.white);
+                neck.position.y = 0.75;
+                group.add(liquid, bottle, neck);
+            } else if (type === 'COIN') {
+                const geo = new THREE.CylinderGeometry(0.5, 0.5, 0.1, 32);
+                mesh = new THREE.Mesh(geo, mats.gold);
+                mesh.rotation.x = Math.PI/2;
+                mesh.position.y = 0.5;
+                group.add(mesh);
+            }
+            
+            group.traverse(c => { 
+                if(c.isMesh && !isMobile) { 
+                    c.castShadow = true; 
+                    c.receiveShadow = true; 
+                }
+            });
+            return group;
+        }
+
+        // --- ENVIRONMENT ---
+        const floorGeo = new THREE.PlaneGeometry(400, 400);
+        const floor = new THREE.Mesh(floorGeo, mats.snow);
+        floor.rotation.x = -Math.PI/2;
+        floor.position.z = -150;
+        if (!isMobile) floor.receiveShadow = true;
+        scene.add(floor);
+
+        const pathGeo = new THREE.PlaneGeometry(14, 400);
+        const path = new THREE.Mesh(pathGeo, mats.ice);
+        path.rotation.x = -Math.PI/2;
+        path.position.y = 0.01;
+        path.position.z = -150;
+        if (!isMobile) path.receiveShadow = true;
+        scene.add(path);
+
+        const trees = [];
+        const treeTrunk = new THREE.CylinderGeometry(0.4, 0.6, 1, 6);
+        const treeTop = new THREE.ConeGeometry(2.5, 5, 6);
+        const snowCap = new THREE.ConeGeometry(2.6, 1.5, 6);
+
+        for(let i=0; i<30; i++) {
+            const t = new THREE.Group();
+            const trunk = new THREE.Mesh(treeTrunk, mats.wood);
+            trunk.position.y = 0.5;
+            const leaves = new THREE.Mesh(treeTop, mats.leaf);
+            leaves.position.y = 2.5;
+            const snowTop = new THREE.Mesh(snowCap, mats.white);
+            snowTop.position.y = 4.0;
+            
+            if (!isMobile) {
+                trunk.castShadow = true; 
+                leaves.castShadow = true;
+            }
+            t.add(trunk, leaves, snowTop);
+            
+            const x = (Math.random() > 0.5 ? 1 : -1) * (8 + Math.random()*10);
+            t.position.set(x, 0, -Math.random()*150);
+            scene.add(t);
+            trees.push(t);
+        }
+        
+        const clouds = [];
+        const cloudGeo = new THREE.SphereGeometry(3, 8, 8);
+        const cloudMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent:true, opacity: 0.8 });
+        
+        for(let i=0; i<10; i++) {
+            const c = new THREE.Group();
+            const p1 = new THREE.Mesh(cloudGeo, cloudMat);
+            const p2 = new THREE.Mesh(cloudGeo, cloudMat); p2.position.x = 3; p2.scale.setScalar(0.8);
+            const p3 = new THREE.Mesh(cloudGeo, cloudMat); p3.position.x = -3; p3.scale.setScalar(0.8);
+            c.add(p1, p2, p3);
+            c.position.set((Math.random()-0.5)*80, 15+Math.random()*10, -Math.random()*100);
+            scene.add(c);
+            clouds.push(c);
+        }
+
+        // --- PLAYER ---
+        const player = new THREE.Group();
+        const body = new THREE.Mesh(new THREE.BoxGeometry(1, 1.2, 0.8), mats.blue);
+        body.position.y = 1.6; 
+        if (!isMobile) body.castShadow = true; 
+        player.add(body);
+        
+        const head = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.9, 0.9), new THREE.MeshToonMaterial({color: 0xffccaa}));
+        head.position.y = 2.7; player.add(head);
+        
+        const scarf = new THREE.Mesh(new THREE.TorusGeometry(0.6, 0.2, 8, 16), mats.red);
+        scarf.rotation.x = Math.PI/2;
+        scarf.position.y = 2.2;
+        player.add(scarf);
+
+        const lLeg = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.8, 0.35), mats.white);
+        lLeg.position.set(0.3, 0.6, 0);
+        const rLeg = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.8, 0.35), mats.white);
+        rLeg.position.set(-0.3, 0.6, 0);
+        player.add(lLeg, rLeg);
+        player.userData = { lLeg, rLeg };
+
+        scene.add(player);
+
+        // --- GAME STATE ---
+        let lane = 1; 
+        let speed = CONFIG.BASE_SPEED;
+        let score = 0;
+        let span = 1;
+        let lives = CONFIG.STARTING_LIVES;
+        let isJumping = false;
+        let jumpVel = 0;
+        let isPaused = false;
+        let isTransitioning = false;
+        
+        let activeObjs = [];
+        let memorySeq = [];
+        let recallSeq = [];
+        let packIdx = 0;
+        let state = 'menu'; 
+        let dataLog = []; 
+        let highScore = SafeStorage.get('winterRunnerHigh', { score: 0, span: 1 });
+
+        let lastInputTime = 0;
+        let lastCollisionTime = 0;
+
+        // --- AUDIO ---
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) {
+                try {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.warn('Audio not available:', e);
+                }
+            }
+            
+            // iOS fix: resume if suspended
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(freq, duration = 0.1, type = 'sine') {
+            if (!audioCtx) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.frequency.value = freq;
+                osc.type = type;
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {
+                console.warn('Sound play failed:', e);
+            }
+        }
+
+        // --- VALIDATION ---
+        function validateSequence(seq, context = 'unknown') {
+            if (!Array.isArray(seq)) {
+                console.error(`Invalid sequence (${context}): not an array`);
+                return false;
+            }
+            
+            if (seq.length === 0 || seq.length > CONFIG.MAX_SEQUENCE_LENGTH) {
+                console.error(`Invalid sequence (${context}): length ${seq.length}`);
+                return false;
+            }
+            
+            for (let i = 0; i < seq.length; i++) {
+                const item = seq[i];
+                if (!item || !item.id || !item.icon) {
+                    console.error(`Invalid item at index ${i} (${context}):`, item);
+                    return false;
+                }
+                
+                const isValid = ITEM_DEFS.some(def => def.id === item.id);
+                if (!isValid) {
+                    console.error(`Unknown item ID: ${item.id} (${context})`);
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+
+        function selectNewItem(existingSeq) {
+            const availableItems = ITEM_DEFS.filter(i => !existingSeq.some(m => m.id === i.id));
+            
+            if (availableItems.length > 0) {
+                return availableItems[Math.floor(Math.random() * availableItems.length)];
+            }
+            
+            const itemCounts = {};
+            ITEM_DEFS.forEach(item => itemCounts[item.id] = 0);
+            existingSeq.forEach(item => itemCounts[item.id]++);
+            
+            const minCount = Math.min(...Object.values(itemCounts));
+            const leastUsed = ITEM_DEFS.filter(item => itemCounts[item.id] === minCount);
+            
+            return leastUsed[Math.floor(Math.random() * leastUsed.length)];
+        }
+
+        function disposeObject(obj) {
+            if (!obj || !obj.mesh) return;
+            
+            obj.mesh.traverse(child => {
+                if (child.geometry) {
+                    child.geometry.dispose();
+                }
+                
+                if (child.material) {
+                    if (Array.isArray(child.material)) {
+                        child.material.forEach(m => m.dispose());
+                    } else {
+                        child.material.dispose();
+                    }
+                }
+            });
+            
+            scene.remove(obj.mesh);
+        }
+
+        // --- GAME LOGIC ---
+        const game = {
+            start() {
+                initAudio();
+                document.getElementById('start-menu').classList.add('hidden');
+                document.getElementById('game-over').classList.add('hidden');
+                this.reset();
+                state = 'running';
+                isPaused = false;
+                this.spawnMemory();
+            },
+            
+            reset() {
+                score = 0; 
+                span = 1; 
+                speed = CONFIG.BASE_SPEED; 
+                lane = 1; 
+                lives = CONFIG.STARTING_LIVES;
+                isTransitioning = false;
+                
+                // Kill all GSAP animations
+                gsap.killTweensOf(player.scale);
+                gsap.killTweensOf(player.position);
+                
+                activeObjs.forEach(o => {
+                    if (o.mesh) {
+                        gsap.killTweensOf(o.mesh);
+                        gsap.killTweensOf(o.mesh.position);
+                        gsap.killTweensOf(o.mesh.scale);
+                    }
+                    disposeObject(o);
+                });
+                activeObjs = [];
+                
+                player.position.set(0, 0, 0);
+                player.scale.set(1, 1, 1);
+                this.clearInventory();
+                this.updateHUD();
+            },
+
+            getSpeed() {
+                return Math.min(CONFIG.MAX_SPEED, CONFIG.BASE_SPEED + (span - 1) * CONFIG.SPEED_INCREMENT);
+            },
+
+            updateHUD() {
+                document.getElementById('score').innerText = score;
+                document.getElementById('level').innerText = span;
+                document.getElementById('lives-panel').innerText = '❤️'.repeat(Math.max(0, lives));
+            },
+
+            updateInventory(icon) {
+                const panel = document.getElementById('inventory-panel');
+                panel.classList.remove('hidden');
+                const spanElem = document.createElement('span');
+                spanElem.className = 'inv-item';
+                spanElem.innerText = icon;
+                panel.appendChild(spanElem);
+            },
+
+            clearInventory() {
+                const panel = document.getElementById('inventory-panel');
+                panel.innerHTML = '';
+                panel.classList.remove('hidden');
+            },
+
+            hideInventory() {
+                document.getElementById('inventory-panel').classList.add('hidden');
+            },
+
+            spawnMemory() {
+                this.clearInventory();
+                memorySeq = [];
+                
+                const currentSpan = Math.min(span, CONFIG.MAX_SEQUENCE_LENGTH);
+                
+                for(let i = 0; i < currentSpan; i++) {
+                    memorySeq.push(ITEM_DEFS[Math.floor(Math.random() * ITEM_DEFS.length)]);
+                }
+                
+                if (!validateSequence(memorySeq, 'memory')) {
+                    console.error('Generated invalid memory sequence, ending game');
+                    this.gameOver();
+                    return;
+                }
+                
+                this.ui(`COLLECT ${currentSpan} ITEM${currentSpan > 1 ? 'S' : ''}!`);
+                packIdx = 0;
+                
+                let z = -40;
+                memorySeq.forEach(item => {
+                    this.spawnObject(item, z, 1, 'item'); 
+                    z -= CONFIG.ITEM_SPACING;
+                });
+            },
+
+            spawnObject(data, z, laneIdx, type) {
+                const obj3d = create3DItem(data.id);
+                const x = (laneIdx - 1) * CONFIG.LANE_WIDTH;
+                obj3d.position.set(x, 1, z); 
+                scene.add(obj3d);
+                activeObjs.push({ mesh: obj3d, data: data, type: type, active: true, collected: false });
+                return obj3d;
+            },
+
+            spawnGateObject(data, z, laneIdx, isCorrect) {
+                // Bounds check
+                if (laneIdx < 0 || laneIdx >= CONFIG.MAX_LANES) {
+                    console.error('Invalid lane index:', laneIdx);
+                    laneIdx = Math.max(0, Math.min(CONFIG.MAX_LANES - 1, laneIdx));
+                }
+                
+                const group = new THREE.Group();
+                group.position.set((laneIdx - 1) * CONFIG.LANE_WIDTH, 0, z);
+
+                const colors = [mats.framePink, mats.frameBlue, mats.frameYellow];
+                const glassColors = [mats.portalPink, mats.portalBlue, mats.portalYellow];
+                const frameMat = colors[laneIdx];
+                const glassMat = glassColors[laneIdx];
+
+                const leftPillar = new THREE.Mesh(new THREE.BoxGeometry(0.4, 5, 0.4), frameMat);
+                leftPillar.position.set(-1.3, 2.5, 0);
+                const rightPillar = new THREE.Mesh(new THREE.BoxGeometry(0.4, 5, 0.4), frameMat);
+                rightPillar.position.set(1.3, 2.5, 0);
+                const topBar = new THREE.Mesh(new THREE.BoxGeometry(3, 0.4, 0.4), frameMat);
+                topBar.position.set(0, 4.8, 0);
+                const glass = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 4.5), glassMat);
+                glass.position.set(0, 2.5, 0);
+
+                group.add(leftPillar, rightPillar, topBar, glass);
+
+                const itemMesh = create3DItem(data.id);
+                itemMesh.position.set(0, 2.5, 0.5); 
+                itemMesh.scale.set(1.5, 1.5, 1.5);
+                group.add(itemMesh);
+
+                scene.add(group);
+                activeObjs.push({ mesh: group, data: data, type: 'gate', active: true, isCorrect: isCorrect });
+            },
+
+            triggerEvent() {
+                if (isTransitioning) return;
+                isTransitioning = true;
+                
+                state = 'event';
+                speed = this.getSpeed();
+                this.hideInventory();
+
+                const canWind = memorySeq.length > 1;
+                const isWind = canWind && Math.random() > 0.5;
+
+                if(isWind) {
+                    if (memorySeq.length === 0) {
+                        console.error('Cannot remove from empty sequence');
+                        isTransitioning = false;
+                        this.startRecall();
+                        return;
+                    }
+                    
+                    const idx = Math.floor(Math.random() * memorySeq.length);
+                    
+                    if (idx < 0 || idx >= memorySeq.length) {
+                        console.error('Invalid wind index:', idx);
+                        isTransitioning = false;
+                        this.startRecall();
+                        return;
+                    }
+                    
+                    const removed = memorySeq[idx];
+                    recallSeq = memorySeq.filter((_, i) => i !== idx);
+                    
+                    if (recallSeq.length !== memorySeq.length - 1) {
+                        console.error('Wind removal failed');
+                        recallSeq = [...memorySeq];
+                    }
+                    
+                    // Validate fallback
+                    if (!validateSequence(recallSeq, 'wind-fallback')) {
+                        console.error('Fallback sequence invalid, ending game');
+                        isTransitioning = false;
+                        this.gameOver();
+                        return;
+                    }
+                    
+                    this.ui("❄️ WIND BLOWS!");
+                    playSound(300, 0.3, 'sawtooth');
+                    
+                    const vis = create3DItem(removed.id);
+                    vis.position.copy(player.position); 
+                    vis.position.y += 3;
+                    scene.add(vis);
+                    gsap.to(vis.position, {x: 15, y: 10, z: player.position.z - 30, duration: 2});
+                    gsap.to(vis.scale, {x:0, y:0, z:0, duration: 2, onComplete: () => {
+                        vis.traverse(child => {
+                            if (child.geometry) child.geometry.dispose();
+                            if (child.material) child.material.dispose();
+                        });
+                        scene.remove(vis);
+                    }});
+                    setTimeout(() => {
+                        isTransitioning = false;
+                        this.startRecall();
+                    }, 2500);
+                } else {
+                    const newItem = selectNewItem(memorySeq);
+                    recallSeq = [...memorySeq, newItem];
+                    
+                    this.ui("✨ MAGIC DROP!");
+                    playSound(600, 0.3, 'sine');
+                    
+                    const vis = create3DItem(newItem.id);
+                    vis.position.set(player.position.x, 10, player.position.z - 5);
+                    scene.add(vis);
+                    gsap.to(vis.position, {y: 1.5, duration: 1, ease: "bounce.out"});
+                    setTimeout(() => { 
+                        vis.traverse(child => {
+                            if (child.geometry) child.geometry.dispose();
+                            if (child.material) child.material.dispose();
+                        });
+                        scene.remove(vis);
+                        isTransitioning = false;
+                        this.startRecall(); 
+                    }, 2500);
+                }
+            },
+
+            startRecall() {
+                if (!validateSequence(recallSeq, 'recall')) {
+                    console.error('Invalid recall sequence, ending game');
+                    this.gameOver();
+                    return;
+                }
+                
+                state = 'recall';
+                speed = this.getSpeed();
+                packIdx = 0;
+                this.ui("🎯 RECALL SEQUENCE!");
+                
+                let z = -60;
+                
+                recallSeq.forEach((target, idx) => {
+                    const currentZ = z - (idx * CONFIG.GATE_SPACING);
+                    
+                    const others = ITEM_DEFS.filter(i => i.id !== target.id)
+                        .sort(() => 0.5 - Math.random())
+                        .slice(0, 2);
+                    const choices = [target, ...others].sort(() => 0.5 - Math.random());
+                    
+                    choices.forEach((item, l) => {
+                        const isCorrect = (item.id === target.id);
+                        this.spawnGateObject(item, currentZ, l, isCorrect);
+                    });
+                });
+            },
+
+            showGateFeedback(gateGroup, isCorrect) {
+                if (!gateGroup) return;
+                
+                const feedbackGeo = new THREE.SphereGeometry(3, 16, 16);
+                const feedbackMat = isCorrect ? mats.glowGreen : mats.glowRed;
+                const feedback = new THREE.Mesh(feedbackGeo, feedbackMat);
+                feedback.position.copy(gateGroup.position);
+                feedback.position.y = 2.5;
+                scene.add(feedback);
+                
+                gsap.to(feedback.scale, {
+                    x: 2, y: 2, z: 2, 
+                    duration: 0.5, 
+                    onComplete: () => {
+                        feedback.geometry.dispose();
+                        feedback.material.dispose();
+                        scene.remove(feedback);
+                    }
+                });
+                gsap.to(feedback.material, {opacity: 0, duration: 0.5});
+            },
+
+            handleHit(obj) {
+                const now = Date.now();
+                if (now - lastCollisionTime < CONFIG.COLLISION_COOLDOWN) return;
+                lastCollisionTime = now;
+                
+                if (!obj || !obj.mesh) return;
+                
+                obj.active = false;
+                
+                gsap.to(player.scale, {y:0.8, x:1.2, z:1.2, duration:0.1, yoyo:true, repeat:1});
+
+                if(obj.type === 'item' && state === 'running') {
+                    score += 10;
+                    obj.collected = true;
+                    packIdx++;
+                    this.ui("✅ GOT IT!", 400);
+                    playSound(523, 0.1);
+                    this.updateInventory(obj.data.icon);
+                    
+                    disposeObject(obj);
+                    
+                    // Remove from array
+                    const index = activeObjs.indexOf(obj);
+                    if (index > -1) {
+                        activeObjs.splice(index, 1);
+                    }
+                    
+                    if(packIdx >= memorySeq.length && !isTransitioning) {
+                        this.wait(() => this.triggerEvent(), 1000);
+                    }
+                }
+                else if(obj.type === 'gate' && state === 'recall') {
+                    const gateZ = obj.mesh.position.z;
+                    const toRemove = [];
+                    
+                    // Mark for removal instead of modifying during iteration
+                    activeObjs.forEach(o => {
+                        if(o.mesh && o.type === 'gate' && Math.abs(o.mesh.position.z - gateZ) < 5) {
+                            o.active = false;
+                            disposeObject(o);
+                            toRemove.push(o);
+                        }
+                    });
+                    
+                    // Remove after iteration
+                    toRemove.forEach(o => {
+                        const index = activeObjs.indexOf(o);
+                        if (index > -1) {
+                            activeObjs.splice(index, 1);
+                        }
+                    });
+
+                    if(obj.isCorrect) {
+                        score += 100;
+                        this.ui("✅ CORRECT!", 500);
+                        playSound(659, 0.15);
+                        this.showGateFeedback(obj.mesh, true);
+                        packIdx++;
+                        
+                        if(packIdx >= recallSeq.length) {
+                            span++;
+                            this.ui("🎉 SEQUENCE COMPLETE!", 2000);
+                            playSound(784, 0.3);
+                            setTimeout(() => {
+                                state = 'running';
+                                this.spawnMemory();
+                            }, 2000);
+                        }
+                    } else {
+                        lives--;
+                        packIdx++;
+                        playSound(200, 0.3, 'sawtooth');
+                        this.showGateFeedback(obj.mesh, false);
+                        
+                        if(lives <= 0) {
+                            this.gameOver();
+                        } else {
+                            this.ui(`❌ OOPS! ${lives} LIVES LEFT`, 1000);
+                            if(packIdx >= recallSeq.length) {
+                                span++; 
+                                setTimeout(() => {
+                                    state = 'running';
+                                    this.spawnMemory();
+                                }, 1500);
+                            }
+                        }
+                    }
+                }
+                this.updateHUD();
+            },
+
+            gameOver() {
+                state = 'gameover';
+                playSound(150, 0.5, 'sawtooth');
+                document.getElementById('game-over').classList.remove('hidden');
+                document.getElementById('final-score').innerText = score;
+                document.getElementById('final-level').innerText = span;
+                document.getElementById('best-score').innerText = highScore.score;
+                
+                let newHigh = false;
+                if (score > highScore.score) {
+                    highScore.score = score;
+                    newHigh = true;
+                }
+                if (span > highScore.span) {
+                    highScore.span = span;
+                    newHigh = true;
+                }
+                
+                if (newHigh) {
+                    if (SafeStorage.set('winterRunnerHigh', highScore)) {
+                        document.getElementById('high-score-msg').style.display = 'block';
+                        playSound(880, 0.5);
+                    }
+                } else {
+                    document.getElementById('high-score-msg').style.display = 'none';
+                }
+                
+                dataLog.push({ date: new Date().toISOString(), score, span });
+                
+                // Cap log size
+                if (dataLog.length > CONFIG.MAX_DATA_LOG_SIZE) {
+                    dataLog = dataLog.slice(-CONFIG.MAX_DATA_LOG_SIZE);
+                }
+            },
+
+            ui(text, dur=1500) {
+                const el = document.getElementById('center-msg');
+                el.innerText = text;
+                el.classList.add('visible');
+                setTimeout(() => el.classList.remove('visible'), dur);
+            },
+
+            retryLevel() {
+                activeObjs.forEach(o => disposeObject(o));
+                activeObjs = [];
+                this.spawnMemory(); 
+            },
+            
+            wait(fn, ms) { setTimeout(fn, ms); },
+
+            downloadData() {
+                const blob = new Blob([JSON.stringify(dataLog, null, 2)], {type:'application/json'});
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'winter_runner_data.json';
+                a.click();
+            },
+
+            handleMiss() {
+                lives--;
+                playSound(200, 0.3, 'sawtooth');
+                this.ui(`⚠️ MISSED! ${lives} LEFT`, 1000);
+                this.updateHUD();
+                if(lives <= 0) {
+                    this.gameOver();
+                } else {
+                    this.retryLevel();
+                }
+            },
+
+            handleMissGate() {
+                lives--;
+                packIdx++;
+                playSound(200, 0.3, 'sawtooth');
+                this.ui(`⚠️ MISSED GATE! ${lives} LEFT`, 1000);
+                this.updateHUD();
+                
+                if(lives <= 0) {
+                    this.gameOver();
+                } else if(packIdx >= recallSeq.length) {
+                    span++; 
+                    this.wait(() => {
+                        state = 'running';
+                        this.spawnMemory();
+                    }, 1500);
+                }
+            },
+
+            moveLeft() {
+                const now = Date.now();
+                if (now - lastInputTime < CONFIG.INPUT_DELAY) return;
+                if(state === 'menu' || state === 'gameover' || isPaused) return;
+                
+                if(lane > 0) {
+                    lane--;
+                    lastInputTime = now;
+                    playSound(440, 0.05);
+                }
+            },
+
+            moveRight() {
+                const now = Date.now();
+                if (now - lastInputTime < CONFIG.INPUT_DELAY) return;
+                if(state === 'menu' || state === 'gameover' || isPaused) return;
+                
+                if(lane < 2) {
+                    lane++;
+                    lastInputTime = now;
+                    playSound(440, 0.05);
+                }
+            },
+
+            jump() {
+                const now = Date.now();
+                if (now - lastInputTime < CONFIG.INPUT_DELAY) return;
+                if(state === 'menu' || state === 'gameover' || isPaused) return;
+                
+                if(!isJumping) {
+                    isJumping = true;
+                    jumpVel = CONFIG.JUMP_VELOCITY;
+                    lastInputTime = now;
+                    playSound(350, 0.1);
+                }
+            }
+        };
+
+        // --- ANIMATION LOOP ---
+        let deltaTime = 0;
+        function animate() {
+            requestAnimationFrame(animate);
+            deltaTime = Math.min(clock.getDelta(), CONFIG.MAX_DELTA_TIME);
+            const time = clock.getElapsedTime();
+
+            if(isPaused) {
+                renderer.render(scene, camera);
+                return;
+            }
+
+            if(state === 'running' || state === 'recall' || state === 'event') {
+                const currentSpeed = speed * 60 * deltaTime;
+
+                trees.forEach(t => {
+                    t.position.z += currentSpeed;
+                    if(t.position.z > 10) t.position.z = -200 - Math.random()*50;
+                });
+                clouds.forEach(c => {
+                    c.position.z += currentSpeed * 0.5;
+                    if(c.position.z > 20) c.position.z = -150;
+                });
+
+                const snowPos = snow.geometry.attributes.position;
+                const fallSpeed = 10 * deltaTime;
+                const windSpeed = 2 * deltaTime;
+
+                for (let i = 0; i < SNOW_COUNT * 3; i += 3) {
+                    snowPos.array[i] += Math.sin(time * 0.3 + i * 0.01) * windSpeed;
+                    snowPos.array[i + 1] -= fallSpeed;
+                    snowPos.array[i + 2] += currentSpeed * 0.5;
+
+                    if (snowPos.array[i + 1] < 0 || snowPos.array[i + 2] > 15) {
+                        snowPos.array[i] = (Math.random() - 0.5) * 30;
+                        snowPos.array[i + 1] = 20 + Math.random() * 10;
+                        snowPos.array[i + 2] = -40 + Math.random() * 5;
+                    }
+                }
+                snowPos.needsUpdate = true;
+
+                for(let i = activeObjs.length - 1; i >= 0; i--) {
+                    const o = activeObjs[i];
+                    if (!o || !o.mesh) {
+                        activeObjs.splice(i, 1);
+                        continue;
+                    }
+                    
+                    o.mesh.position.z += currentSpeed;
+                    
+                    if(o.type === 'item') {
+                        o.mesh.rotation.y += 0.02 * 60 * deltaTime;
+                    }
+
+                    if(o.active && Math.abs(o.mesh.position.z - player.position.z) < 1.5) {
+                        if(Math.abs(o.mesh.position.x - player.position.x) < 2.0) {
+                            game.handleHit(o);
+                        }
+                    }
+                    
+                    if(o.mesh.position.z > 10) {
+                        disposeObject(o);
+                        activeObjs.splice(i, 1);
+                        
+                        if(o.type === 'item' && state === 'running' && !o.collected) {
+                            game.handleMiss();
+                        } else if(o.type === 'gate' && state === 'recall' && o.active && o.isCorrect) {
+                            game.handleMissGate();
+                        }
+                    }
+                }
+
+                const tx = (lane - 1) * CONFIG.LANE_WIDTH;
+                player.position.x += (tx - player.position.x) * 0.2 * 60 * deltaTime;
+
+                player.userData.lLeg.rotation.x = Math.sin(time * 10) * 0.8;
+                player.userData.rLeg.rotation.x = Math.sin(time * 10 + Math.PI) * 0.8;
+
+                if(isJumping) {
+                    player.position.y += jumpVel * 60 * deltaTime;
+                    jumpVel -= CONFIG.GRAVITY * 60 * deltaTime;
+                    if(player.position.y <= 0) { 
+                        player.position.y = 0; 
+                        isJumping = false; 
+                    }
+                } else {
+                    player.position.y = Math.abs(Math.sin(time * 20)) * 0.1;
+                }
+
+                camera.position.x = player.position.x * 0.3;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // --- INPUT HANDLERS ---
+        window.addEventListener('keydown', e => {
+            if(e.key === 'ArrowLeft') game.moveLeft();
+            if(e.key === 'ArrowRight') game.moveRight();
+            if(e.key === ' ') {
+                e.preventDefault();
+                game.jump();
+            }
+        });
+
+        let touchStartX = 0;
+        let touchStartY = 0;
+        window.addEventListener('touchstart', e => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        });
+        
+        window.addEventListener('touchend', e => {
+            e.preventDefault();
+            if(state === 'menu' || state === 'gameover') return;
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+            const diffX = touchStartX - touchEndX;
+            const diffY = touchStartY - touchEndY;
+            
+            if(Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+                if(diffX > 0) game.moveLeft();
+                else game.moveRight();
+            } else if(Math.abs(diffY) > 50 && diffY > 0) {
+                game.jump();
+            }
+        });
+
+        // --- PAUSE ON BLUR ---
+        window.addEventListener('blur', () => {
+            if (state === 'running' || state === 'recall' || state === 'event') {
+                isPaused = true;
+                game.ui('⏸️ PAUSED', 999999);
+            }
+        });
+
+        window.addEventListener('focus', () => {
+            if (isPaused) {
+                setTimeout(() => {
+                    isPaused = false;
+                    game.ui('▶️ RESUMING...', 1000);
+                }, 500);
+            }
+        });
+
+        // --- ERROR RECOVERY ---
+        window.addEventListener('error', (event) => {
+            console.error('Global error:', event.error);
+            
+            try {
+                SafeStorage.set('winterRunnerCrash', {
+                    score, span, lives, state,
+                    time: new Date().toISOString()
+                });
+            } catch (e) {
+                console.error('Could not save crash data');
+            }
+            
+            if (state !== 'menu' && state !== 'gameover') {
+                game.ui('⚠️ ERROR - RESTARTING', 3000);
+                setTimeout(() => {
+                    game.reset();
+                    state = 'menu';
+                    document.getElementById('start-menu').classList.remove('hidden');
+                }, 3000);
+            }
+        });
+
+        window.addEventListener('unhandledrejection', (event) => {
+            console.error('Unhandled promise rejection:', event.reason);
+            event.preventDefault();
+        });
+
+        // --- DEBUG MODE ---
+        if (DEBUG) {
+            window.debugGame = {
+                setLives: (n) => { lives = n; game.updateHUD(); },
+                setSpan: (n) => { span = n; game.updateHUD(); },
+                skipToLevel: (n) => { span = n; game.spawnMemory(); },
+                logState: () => console.log({ state, lives, score, span, lane }),
+                forceEvent: () => game.triggerEvent(),
+                pause: () => { isPaused = !isPaused; }
+            };
+            console.log('Debug mode enabled. Use window.debugGame for commands.');
+        }
+
+        // --- INITIALIZATION ---
+        document.getElementById('loader').style.display = 'none';
+        window.game = game;
+        animate();
+        
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+<!-- Google Sheets Data Collection -->
+<script>
+class GameDataCollector {
+  constructor(options = {}) {
+    this.webAppUrl = options.webAppUrl || "https://script.google.com/macros/s/AKfycbxiuQOpLc6jz6MlwCk3ZhQslpKmc83ozbkOHC5zueS3Q504UbJcGAAs3PwRhNjGfLhY/exec";
+    this.gameName = options.gameName || 'Unknown Game';
+    this.allowAnonymous = options.allowAnonymous !== false;
+    this.debug = options.debug || false;
+  }
+  
+  getPlayerId() {
+    if (!this.allowAnonymous) return 'anonymous';
+    let playerId = localStorage.getItem('iqualia_player_id');
+    if (!playerId) {
+      playerId = 'player_' + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem('iqualia_player_id', playerId);
+    }
+    return playerId;
+  }
+  
+  getDeviceInfo() {
+    const ua = navigator.userAgent;
+    let device = 'Desktop';
+    if (/iPhone|iPad|iPod/.test(ua)) device = 'Mobile-iOS';
+    else if (/Android/.test(ua)) device = 'Mobile-Android';
+    
+    let browser = 'Other';
+    if (/Chrome/.test(ua) && !/Chromium/.test(ua)) browser = 'Chrome';
+    else if (/Safari/.test(ua)) browser = 'Safari';
+    else if (/Firefox/.test(ua)) browser = 'Firefox';
+    else if (/Edge/.test(ua)) browser = 'Edge';
+    
+    return {device, browser};
+  }
+  
+  async submitGameData(gameData) {
+    try {
+      const formData = new FormData();
+      formData.append('timestamp', new Date().toISOString());
+      formData.append('game_name', this.gameName);
+      formData.append('player_id', this.getPlayerId());
+      formData.append('score', gameData.score || 0);
+      formData.append('time_spent', gameData.time_spent || 0);
+      formData.append('attempts', gameData.attempts || 0);
+      formData.append('result', gameData.result || 'completed');
+      formData.append('device', this.getDeviceInfo().device);
+      
+      if (this.debug) console.log('Submitting FormData');
+      
+      const response = await fetch(this.webAppUrl, {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (this.debug) console.log('✓ Data submitted successfully');
+      return {success: true};
+    } catch (e) {
+      console.error('Data submission error:', e);
+      return {success: false, error: e.message};
+    }
+  }
+}
+
+// Initialize collector for this game
+const gameCollector = new GameDataCollector({
+  gameName: document.title || 'Game',
+  debug: false
+});
+
+// Log when page loads
+if (gameCollector.debug) {
+  console.log('Data collector ready for:', gameCollector.gameName);
+  console.log('Web App URL:', gameCollector.webAppUrl);
+}
+</script>
+
+</body>
+</html>

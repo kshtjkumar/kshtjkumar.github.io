@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Kumar K | KSHITIJ KUMAR</title>
+    <link>http://localhost:3000/authors/admin/</link>
+      <atom:link href="http://localhost:3000/authors/admin/index.xml" rel="self" type="application/rss+xml" />
+    <description>Kumar K</description>
+    <generator>Hugo Blox Builder (https://hugoblox.com)</generator><language>en-us</language><lastBuildDate>Sun, 01 Dec 2024 00:00:00 +0000</lastBuildDate>
+    <image>
+      <url>http://localhost:3000/media/icon_hu_729f4604415becdb.png</url>
+      <title>Kumar K</title>
+      <link>http://localhost:3000/authors/admin/</link>
+    </image>
+    
+    <item>
+      <title>The effects of stress on working memory and decision-making in rats</title>
+      <link>http://localhost:3000/publication/conference-papers/paper-1/</link>
+      <pubDate>Sun, 01 Dec 2024 00:00:00 +0000</pubDate>
+      <guid>http://localhost:3000/publication/conference-papers/paper-1/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>A Translational Platform for Polyimide Neural Interfaces: Polyimide Synthesis and In Vivo Evaluation in Epileptic Mice</title>
+      <link>http://localhost:3000/publication/journal-papers/journal-1/</link>
+      <pubDate>Fri, 01 Sep 2023 00:00:00 +0000</pubDate>
+      <guid>http://localhost:3000/publication/journal-papers/journal-1/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>ADAPT: Adaptive Camouflage Based Deception Orchestration For Trapping Advanced Persistent Threats</title>
+      <link>http://localhost:3000/featured-publication/publication-3/</link>
+      <pubDate>Sat, 01 Jul 2023 00:00:00 +0000</pubDate>
+      <guid>http://localhost:3000/featured-publication/publication-3/</guid>
+      <description>&lt;div class=&#34;alert alert-note&#34;&gt;
+  &lt;div&gt;
+    Click the &lt;em&gt;Cite&lt;/em&gt; button above to demo the feature to enable visitors to import publication metadata into their reference management software.
+  &lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&#34;alert alert-note&#34;&gt;
+  &lt;div&gt;
+    Create your slides in Markdown - click the &lt;em&gt;Slides&lt;/em&gt; button to check out the example.
+  &lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;Add the publication&amp;rsquo;s &lt;strong&gt;full text&lt;/strong&gt; or &lt;strong&gt;supplementary notes&lt;/strong&gt; here. You can use rich formatting such as including &lt;a href=&#34;https://docs.hugoblox.com/content/writing-markdown-latex/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;code, math, and images&lt;/a&gt;.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>HiPeR-Early Detection of a Ransomware Attack using Hardware Performance Counters</title>
+      <link>http://localhost:3000/featured-publication/publication-2/</link>
+      <pubDate>Sat, 01 Jul 2023 00:00:00 +0000</pubDate>
+      <guid>http://localhost:3000/featured-publication/publication-2/</guid>
+      <description>&lt;div class=&#34;alert alert-note&#34;&gt;
+  &lt;div&gt;
+    Click the &lt;em&gt;Cite&lt;/em&gt; button above to demo the feature to enable visitors to import publication metadata into their reference management software.
+  &lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&#34;alert alert-note&#34;&gt;
+  &lt;div&gt;
+    Create your slides in Markdown - click the &lt;em&gt;Slides&lt;/em&gt; button to check out the example.
+  &lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;Add the publication&amp;rsquo;s &lt;strong&gt;full text&lt;/strong&gt; or &lt;strong&gt;supplementary notes&lt;/strong&gt; here. You can use rich formatting such as including &lt;a href=&#34;https://docs.hugoblox.com/content/writing-markdown-latex/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;code, math, and images&lt;/a&gt;.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>RTR-Shield: Early Detection of Ransomware Using Registry and Trap Files</title>
+      <link>http://localhost:3000/featured-publication/publication-4/</link>
+      <pubDate>Sat, 01 Jul 2023 00:00:00 +0000</pubDate>
+      <guid>http://localhost:3000/featured-publication/publication-4/</guid>
+      <description>&lt;div class=&#34;alert alert-note&#34;&gt;
+  &lt;div&gt;
+    Click the &lt;em&gt;Cite&lt;/em&gt; button above to demo the feature to enable visitors to import publication metadata into their reference management software.
+  &lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&#34;alert alert-note&#34;&gt;
+  &lt;div&gt;
+    Create your slides in Markdown - click the &lt;em&gt;Slides&lt;/em&gt; button to check out the example.
+  &lt;/div&gt;
+&lt;/div&gt;
+&lt;p&gt;Add the publication&amp;rsquo;s &lt;strong&gt;full text&lt;/strong&gt; or &lt;strong&gt;supplementary notes&lt;/strong&gt; here. You can use rich formatting such as including &lt;a href=&#34;https://docs.hugoblox.com/content/writing-markdown-latex/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;code, math, and images&lt;/a&gt;.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Foraging in dynamic environments</title>
+      <link>http://localhost:3000/publication/conference-papers/paper-2/</link>
+      <pubDate>Thu, 01 Dec 2022 00:00:00 +0000</pubDate>
+      <guid>http://localhost:3000/publication/conference-papers/paper-2/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Working memory and decision making</title>
+      <link>http://localhost:3000/publication/conference-papers/paper-3/</link>
+      <pubDate>Sat, 01 Oct 2022 00:00:00 +0000</pubDate>
+      <guid>http://localhost:3000/publication/conference-papers/paper-3/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Impact of working memory on patch foraging</title>
+      <link>http://localhost:3000/publication/conference-papers/paper-4/</link>
+      <pubDate>Tue, 01 Mar 2022 00:00:00 +0000</pubDate>
+      <guid>http://localhost:3000/publication/conference-papers/paper-4/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Environmental Volatility Drives Working Memory Use in Dynamic Foraging Conditions</title>
+      <link>http://localhost:3000/publication/journal-papers/journal-2/</link>
+      <pubDate>Sun, 07 Apr 2019 00:00:00 +0000</pubDate>
+      <guid>http://localhost:3000/publication/journal-papers/journal-2/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>

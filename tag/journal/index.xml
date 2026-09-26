@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Journal | KSHITIJ KUMAR</title>
+    <link>http://localhost:1313/tag/journal/</link>
+      <atom:link href="http://localhost:1313/tag/journal/index.xml" rel="self" type="application/rss+xml" />
+    <description>Journal</description>
+    <generator>Hugo Blox Builder (https://hugoblox.com)</generator><language>en-us</language><lastBuildDate>Sun, 01 Dec 2024 00:00:00 +0000</lastBuildDate>
+    <image>
+      <url>http://localhost:1313/media/icon_hu_729f4604415becdb.png</url>
+      <title>Journal</title>
+      <link>http://localhost:1313/tag/journal/</link>
+    </image>
+    
+    <item>
+      <title>Biomarker discovery using machine learning in the psychosis spectrum</title>
+      <link>http://localhost:1313/publication/journal-papers/biomarker-psychosis/</link>
+      <pubDate>Sun, 01 Dec 2024 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/publication/journal-papers/biomarker-psychosis/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>A Translational Platform for Polyimide Neural Interfaces: Polyimide Synthesis and In Vivo Evaluation in Epileptic Mice</title>
+      <link>http://localhost:1313/publication/journal-papers/journal-1/</link>
+      <pubDate>Fri, 01 Sep 2023 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/publication/journal-papers/journal-1/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Environmental Volatility Drives Working Memory Use in Dynamic Foraging Conditions</title>
+      <link>http://localhost:1313/publication/journal-papers/journal-2/</link>
+      <pubDate>Sun, 07 Apr 2019 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/publication/journal-papers/journal-2/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>
