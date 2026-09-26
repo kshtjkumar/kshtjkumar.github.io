@@ -379,6 +379,83 @@
 
 
 
+<style>
+  .project-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 24px;
+    margin-top: 20px;
+  }
+  .project-tile {
+    background: #f8fafc;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 14px;
+    padding: 30px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .project-tile:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+    border-color: rgba(21, 101, 192, 0.3);
+  }
+  .dark .project-tile {
+    background: #1c1e28;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  }
+  .dark .project-tile:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+    border-color: rgba(247, 100, 151, 0.4);
+  }
+  .project-tile h3 {
+    margin-top: 0;
+    margin-bottom: 14px;
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1.35;
+    color: #0f172a;
+  }
+  .dark .project-tile h3 {
+    color: #ffffff;
+  }
+  .project-tile p {
+    font-size: 0.98rem;
+    line-height: 1.7;
+    margin-bottom: 14px;
+    color: #334155;
+    text-align: justify;
+  }
+  .dark .project-tile p {
+    color: #d1d5db;
+  }
+  .project-tile .project-link-wrapper {
+    margin-top: 12px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+  }
+  .dark .project-tile .project-link-wrapper {
+    border-top-color: rgba(255, 255, 255, 0.08);
+  }
+  .project-tile .project-link {
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-decoration: none;
+    color: #1565c0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .dark .project-tile .project-link {
+    color: #f76497;
+  }
+  .project-tile .project-link:hover {
+    text-decoration: underline;
+  }
+</style>
 </head>
 
 
@@ -983,18 +1060,24 @@
 
 
 
-<div class="col-12 col-md-10 mx-auto">
-  <div class="article-style pt-2">
-    <h3 style="margin-bottom: 1rem;">Cognitive Paradigms & Digital Behavioral Phenotyping</h3>
-    <p style="text-align: justify;">
-      Traditional psychological and cognitive batteries often rely on static laboratory assessments that suffer from limited ecological validity. To bridge the gap between computational theory and behavioral experimentation, I develop gamified cognitive paradigms to capture continuous, high-dimensional behavioral phenotypes across visuospatial memory, phonological working memory, executive function, and motor-cognitive stability.
-    </p>
-    <p style="text-align: justify;">
-      These interactive environments generate rich phenotypic data streams for computational modeling of latent cognitive states and digital biomarker discovery in neuropsychiatric contexts.
-    </p>
-    <p style="text-align: justify; margin-top: 1.5rem;">
-      You can explore and test the interactive paradigms directly in the <a href="/games/">iQualia Games</a> section.
-    </p>
+<div class="col-12 col-lg-10 mx-auto">
+  <div class="project-grid">
+    <div class="project-tile">
+      <div>
+        <h3>Cognitive Paradigms & Digital Behavioral Phenotyping</h3>
+        <p>
+          Traditional psychological and cognitive batteries often rely on static laboratory assessments that suffer from limited ecological validity. To bridge the gap between computational theory and behavioral experimentation, I develop gamified cognitive paradigms to capture continuous, high-dimensional behavioral phenotypes across visuospatial memory, phonological working memory, executive function, and motor-cognitive stability.
+        </p>
+        <p>
+          These interactive environments generate rich phenotypic data streams for computational modeling of latent cognitive states and digital biomarker discovery in neuropsychiatric contexts.
+        </p>
+      </div>
+      <div class="project-link-wrapper">
+        <a href="/games/" class="project-link">
+          Explore Interactive Paradigms (iQualia Games) →
+        </a>
+      </div>
+    </div>
   </div>
 </div></div>
   
