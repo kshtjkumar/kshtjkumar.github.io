@@ -956,190 +956,285 @@
 
   
 
-    <!DOCTYPE html>
-<html lang="en">
-
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-    }
-
-    .section {
-      padding: 20px;
-      margin: 20px 0;
-      border-radius: 5px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    .people-section {
+      padding: 20px 0 40px;
+      width: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
-       
     }
 
-    .section-header {
-      margin-bottom: 20px;
+    .people-header {
+      margin-bottom: 30px;
       text-align: center;
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      align-items: center;
+      gap: 1rem;
     }
 
-    .section-body {
+    .people-title {
+      margin: 0;
+      font-size: 2.2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: inherit;
+    }
+
+    .people-tabs {
+      display: inline-flex;
+      border-radius: 30px;
+      padding: 4px;
+      background: rgba(125, 125, 125, 0.1);
+      border: 1px solid rgba(125, 125, 125, 0.2);
+    }
+
+    .people-tab-btn {
+      background: transparent;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      padding: 8px 26px;
+      border-radius: 24px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: inherit;
+      transition: all 0.2s ease-in-out;
+    }
+
+    .people-tab-btn:hover {
+      background: rgba(125, 125, 125, 0.15);
+    }
+
+    .people-tab-btn.active {
+      background-color: var(--primary, #1565c0);
+      color: #ffffff !important;
+      box-shadow: 0 2px 8px rgba(21, 101, 192, 0.3);
+    }
+
+    .people-tabcontent {
+      display: none;
       width: 100%;
     }
 
-    .section-title {
-      margin: 0;
-      color: #333;
-    }
-
-    .tab {
-      overflow: hidden;
+    .people-tabcontent.active {
       display: flex;
-       
-      border-radius: 5px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
-    .tab button {
-      background-color: #ffffff;
-      border: 1px solid #ddd;
-      outline: none;
-      cursor: pointer;
-      padding: 10px 20px;
-      transition: background-color 0.3s;
-      color: #333;
-      font-weight: 500;
-    }
-
-    .tab button:hover {
-      background-color: #f0f0f0;
-    }
-
-    .tab button:focus {
-      border-color: #0f4787;
-    }
-
-    .tab button.active {
-      background-color: #1565c0;
-      color: #ffffff;
-    }
-
-    .tabcontent {
-      display: none;
-      padding: 20px;
-    }
-
-    .tabcontent.active {
-      display: flex;
+    /* Mentors Grid */
+    #Mentors {
       flex-direction: row;
       justify-content: center;
-      gap: 0.5rem;
+      gap: 2rem;
       flex-wrap: wrap;
+      padding: 10px 0;
     }
 
-    .collaborator,
-    .mentee {
-      margin: 20px;
+    .mentor-card {
       text-align: center;
       display: flex;
       flex-direction: column;
       align-items: center;
+      padding: 28px 24px;
+      border-radius: 14px;
+      border: 1px solid rgba(125, 125, 125, 0.2);
+      background: rgba(125, 125, 125, 0.04);
+      min-width: 260px;
+      max-width: 320px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
-    .collaborator img,
-    .mentee img {
-      width: 150px;
-      height: 150px;
+    .mentor-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .mentor-card img {
+      width: 140px;
+      height: 140px;
       border-radius: 50%;
       object-fit: cover;
-      margin-bottom: 10px;
+      margin-bottom: 16px;
+      border: 3px solid var(--primary, #1565c0);
     }
 
-    .collaborator a,
-    .mentee a {
-      margin: 0;
-      font-size: 1.5rem;
-       
+    .mentor-card a {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: inherit;
+      text-decoration: none;
+      margin-bottom: 6px;
     }
 
-    .collaborator p,
-    .mentee p {
+    .mentor-card a:hover {
+      color: var(--primary, #1565c0);
+    }
+
+    .mentor-card p {
       margin: 0;
-       
+      font-size: 0.92rem;
+      opacity: 0.85;
+      line-height: 1.5;
+    }
+
+    /* Mentees List Layout */
+    #Mentees {
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 0;
+    }
+
+    .mentees-list {
+      width: 100%;
+      max-width: 760px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .mentee-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 16px 22px;
+      border-radius: 12px;
+      border: 1px solid rgba(125, 125, 125, 0.2);
+      background: rgba(125, 125, 125, 0.04);
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    .mentee-item:hover {
+      background: rgba(125, 125, 125, 0.08);
+    }
+
+    .mentee-main {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .mentee-name {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: inherit;
+    }
+
+    .mentee-detail {
+      font-size: 0.88rem;
+      opacity: 0.82;
+    }
+
+    .mentee-year {
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(125, 125, 125, 0.25);
+      white-space: nowrap;
+      background: rgba(125, 125, 125, 0.08);
+    }
+
+    .mentee-item.placeholder {
+      border: 1px dashed rgba(125, 125, 125, 0.35);
+      background: transparent;
+      opacity: 0.65;
+    }
+
+    .mentee-item.placeholder:hover {
+      opacity: 0.9;
+      background: rgba(125, 125, 125, 0.02);
+    }
+
+    @media (max-width: 600px) {
+      .mentee-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      .mentee-year {
+        align-self: flex-start;
+      }
     }
   </style>
-</head>
 
-<body>
-
-  <div class="section">
-    <div class="section-header">
-      <h1 class="section-title">People</h1>
-      <div class="tab">
-        <button class="tablinks" onclick="openTab(event, 'Collaborators', 0)">Collaborators</button>
-        <button class="tablinks" onclick="openTab(event, 'Mentees', 1)">Mentees</button>
+  <div class="people-section">
+    <div class="people-header">
+      <h1 class="people-title">People</h1>
+      <div class="people-tabs">
+        <button class="people-tab-btn active" onclick="openPeopleTab(event, 'Mentors')">Mentors</button>
+        <button class="people-tab-btn" onclick="openPeopleTab(event, 'Mentees')">Mentees</button>
       </div>
     </div>
+
     <div class="section-body">
-      
-      <div class="tabcontent" id="Collaborators">
-        <div class="collaborator">
-          <img src="/media/albums/people/arjun.png" alt="Collaborator">
-          <a href="https://sites.google.com/view/decisionlabiitk/people/arjun?authuser=0" target="_blank">Arjun Ramakrishnan</a>
-          <p>Asssistant Professor</p>
+      <div class="people-tabcontent active" id="Mentors">
+        <div class="mentor-card">
+          <img src="/media/albums/people/arjun.png" alt="Arjun Ramakrishnan">
+          <a href="https://sites.google.com/view/decisionlabiitk/people/arjun?authuser=0" target="_blank" rel="noopener">Arjun Ramakrishnan</a>
+          <p>Assistant Professor, BSBE<br>IIT Kanpur</p>
         </div>
-        <div class="collaborator">
-          <img src="/media/albums/people/poorni.jpg" alt="Collaborator">
-          <a href="https://www.mcleanhospital.org/profile/poornima-kumar" target="_blank">Poornima Kumar</a>
-          <p>Asssistant Professor</p>
-        </div>
-        <div class="collaborator">
-          <img src="/media/albums/people/bodrob.png" alt="Collaborator">
-          <a href="https://semmelweis.hu/psychophysiology/" target="_blank">Róbert Bódizs</a>
-          <p>Professor</p>
+        <div class="mentor-card">
+          <img src="/media/albums/people/poorni.jpg" alt="Poornima Kumar">
+          <a href="https://www.mcleanhospital.org/profile/poornima-kumar" target="_blank" rel="noopener">Poornima Kumar</a>
+          <p>Assistant Professor, Psychiatry<br>McLean Hospital / Harvard Medical School</p>
         </div>
       </div>
-      
-      <div class="tabcontent" id="Mentees">
-        <div class="mentee">
-          <img src="https://via.placeholder.com/150" alt="Mentee">
-          <a href=""><p>Collaborator Name 1</p></a>
-          <p>Mentee Role 1</p>
-        </div>
-        <div class="mentee">
-          <img src="https://via.placeholder.com/150" alt="Mentee">
-          <a href=""><p>Collaborator Name 1</p></a>
-          <p>Mentee Role 2</p>
+
+      <div class="people-tabcontent" id="Mentees">
+        <div class="mentees-list">
+          <div class="mentee-item">
+            <div class="mentee-main">
+              <span class="mentee-name">Archit Bansal</span>
+              <span class="mentee-detail">Patch foraging &amp; decision-making under working memory load</span>
+            </div>
+            <span class="mentee-year">2021–2022</span>
+          </div>
+
+          <div class="mentee-item">
+            <div class="mentee-main">
+              <span class="mentee-name">Abhinav Joshi</span>
+              <span class="mentee-detail">Learning &amp; decision-making in dynamic environments</span>
+            </div>
+            <span class="mentee-year">2021–2022</span>
+          </div>
+
+          <div class="mentee-item placeholder">
+            <div class="mentee-main">
+              <span class="mentee-name" style="font-weight: 500; font-style: italic;">[Mentee Name]</span>
+              <span class="mentee-detail" style="font-style: italic;">Upcoming mentee / Project details to be added</span>
+            </div>
+            <span class="mentee-year" style="font-style: italic;">Year</span>
+          </div>
+
+          <div class="mentee-item placeholder">
+            <div class="mentee-main">
+              <span class="mentee-name" style="font-weight: 500; font-style: italic;">[Mentee Name]</span>
+              <span class="mentee-detail" style="font-style: italic;">Upcoming mentee / Project details to be added</span>
+            </div>
+            <span class="mentee-year" style="font-style: italic;">Year</span>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    function openTab(evt, tabName, tabIndex) {
+    function openPeopleTab(evt, tabName) {
       var i, tabcontent, tablinks;
-      tabcontent = document.getElementsByClassName("tabcontent");
+      tabcontent = document.getElementsByClassName("people-tabcontent");
       for (i = 0; i < tabcontent.length; i++) {
         tabcontent[i].classList.remove("active");
-        document.getElementsByClassName("tablinks")[i].classList.remove("active");
+      }
+      tablinks = document.getElementsByClassName("people-tab-btn");
+      for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].classList.remove("active");
       }
       document.getElementById(tabName).classList.add("active");
-      document.getElementsByClassName("tablinks")[tabIndex].classList.add("active");
+      evt.currentTarget.classList.add("active");
     }
-
-    
-    document.getElementsByClassName("tablinks")[0].click();
-    document.getElementsByClassName("tablinks")[0].classList.add("active");
   </script>
-
-</body>
-
-</html>
 
   
 
