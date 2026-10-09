@@ -2,38 +2,78 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Journal Publications | KSHITIJ KUMAR</title>
-    <link>http://localhost:3000/publication/journal-papers/</link>
-      <atom:link href="http://localhost:3000/publication/journal-papers/index.xml" rel="self" type="application/rss+xml" />
-    <description>Journal Publications</description>
-    <generator>Hugo Blox Builder (https://hugoblox.com)</generator><language>en-us</language><lastBuildDate>Sun, 01 Dec 2024 00:00:00 +0000</lastBuildDate>
+    <link>https://kshtjkumar.github.io/publication/journal-papers/</link>
+      <atom:link href="https://kshtjkumar.github.io/publication/journal-papers/index.xml" rel="self" type="application/rss+xml" />
+    <description>Peer-reviewed journal publications, preprints, and manuscripts in neural engineering, systems electrophysiology, and computational cognition by Kshitij Kumar.</description>
+    <generator>Hugo Blox Builder (https://hugoblox.com)</generator><language>en-us</language><lastBuildDate>Fri, 09 Oct 2026 00:00:00 +0000</lastBuildDate>
     <image>
-      <url>http://localhost:3000/media/icon_hu_729f4604415becdb.png</url>
+      <url>https://kshtjkumar.github.io/media/icon_hu_729f4604415becdb.png</url>
       <title>Journal Publications</title>
-      <link>http://localhost:3000/publication/journal-papers/</link>
+      <link>https://kshtjkumar.github.io/publication/journal-papers/</link>
     </image>
     
     <item>
-      <title>Biomarker discovery using machine learning in the psychosis spectrum</title>
-      <link>http://localhost:3000/publication/journal-papers/biomarker-psychosis/</link>
-      <pubDate>Sun, 01 Dec 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:3000/publication/journal-papers/biomarker-psychosis/</guid>
-      <description></description>
-    </item>
-    
-    <item>
       <title>A Translational Platform for Polyimide Neural Interfaces: Polyimide Synthesis and In Vivo Evaluation in Epileptic Mice</title>
-      <link>http://localhost:3000/publication/journal-papers/journal-1/</link>
-      <pubDate>Fri, 01 Sep 2023 00:00:00 +0000</pubDate>
-      <guid>http://localhost:3000/publication/journal-papers/journal-1/</guid>
-      <description></description>
+      <link>https://doi.org/10.1109/ACCESS.2026.3674701</link>
+      <pubDate>Mon, 01 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>https://doi.org/10.1109/ACCESS.2026.3674701</guid>
+      <description>Development of clinical-grade BPDA–pPDA polyimide-based flexible microelectrode arrays for in vivo electrophysiology recording, with translational applications in brain-computer interfaces. Published in IEEE Access.</description>
     </item>
-    
+
     <item>
-      <title>Environmental Volatility Drives Working Memory Use in Dynamic Foraging Conditions</title>
-      <link>http://localhost:3000/publication/journal-papers/journal-2/</link>
-      <pubDate>Sun, 07 Apr 2019 00:00:00 +0000</pubDate>
-      <guid>http://localhost:3000/publication/journal-papers/journal-2/</guid>
-      <description></description>
+      <title>State-dependent aperiodic EEG dynamics track cortical network reorganization in chronic epilepsy</title>
+      <link>https://doi.org/10.64898/2026.08.20.745947</link>
+      <pubDate>Thu, 20 Aug 2026 00:00:00 +0000</pubDate>
+      <guid>https://doi.org/10.64898/2026.08.20.745947</guid>
+      <description>Evaluating 1/f aperiodic EEG spectral slope as a systems-level electrophysiological marker of cortical excitation-inhibition (E/I) balance in chronic epilepsy models. Under review at PNAS Nexus.</description>
+    </item>
+
+    <item>
+      <title>Schizotypal Traits and Belief Updating in Dynamic Environments: Insights from a Novel Patch-Foraging Paradigm</title>
+      <link>https://kshtjkumar.github.io/publication/journal-papers/</link>
+      <pubDate>Wed, 15 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>https://kshtjkumar.github.io/publication/journal-papers/#schizotypal-foraging</guid>
+      <description>Investigating heterogeneity in belief updating, environmental volatility priors, and adaptive exploration-exploitation trade-offs across schizotypal personality traits using a computational patch-foraging framework. Submitted to PLOS ONE.</description>
+    </item>
+
+    <item>
+      <title>A Tutorial on Interpreting Electrochemical Impedance Spectroscopy of Neural Microelectrodes</title>
+      <link>https://kshtjkumar.github.io/publication/journal-papers/</link>
+      <pubDate>Mon, 01 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>https://kshtjkumar.github.io/publication/journal-papers/#eis-tutorial</guid>
+      <description>A comprehensive methodological and theoretical tutorial for neural engineering researchers on measurement, equivalent circuit modeling, and physical interpretation of electrical impedance spectroscopy (EIS) across neural microelectrodes. Under review at Frontiers in Neuroscience.</description>
+    </item>
+
+    <item>
+      <title>Learning and Decision Making in Dynamic Environments</title>
+      <link>https://kshtjkumar.github.io/publication/journal-papers/</link>
+      <pubDate>Fri, 01 May 2026 00:00:00 +0000</pubDate>
+      <guid>https://kshtjkumar.github.io/publication/journal-papers/#dynamic-environments</guid>
+      <description>Investigating how humans arbitrate between working memory representations and reinforcement learning in non-stationary, depleting foraging landscapes under varying cognitive constraints. Manuscript Ready for Submission.</description>
+    </item>
+
+    <item>
+      <title>Synergistic effects of glucocorticoid and noradrenergic activity on spatial memory</title>
+      <link>https://kshtjkumar.github.io/publication/journal-papers/</link>
+      <pubDate>Wed, 01 Apr 2026 00:00:00 +0000</pubDate>
+      <guid>https://kshtjkumar.github.io/publication/journal-papers/#spatial-memory</guid>
+      <description>Evaluating the combined neuromodulatory actions of corticosteroid elevation and noradrenergic stimulation on rodent spatial memory encoding, retrieval, and hippocampal-prefrontal circuit dynamics. Manuscript Ready for Submission.</description>
+    </item>
+
+    <item>
+      <title>A Novel Commutable Coaxial Micro-Macro Electrode for MER in Human DBS: Preclinical Rodent Evaluation</title>
+      <link>https://kshtjkumar.github.io/publication/journal-papers/</link>
+      <pubDate>Sun, 01 Mar 2026 00:00:00 +0000</pubDate>
+      <guid>https://kshtjkumar.github.io/publication/journal-papers/#coaxial-electrode</guid>
+      <description>Design, fabrication, and preclinical validation of a unified commutable coaxial electrode architecture enabling microelectrode recording (MER) and therapeutic macro-stimulation without surgical lead exchange in deep brain stimulation. Manuscript Under Preparation.</description>
+    </item>
+
+    <item>
+      <title>Biomarker discovery using machine learning in the psychosis spectrum</title>
+      <link>https://doi.org/10.1016/j.bionps.2024.100107</link>
+      <pubDate>Sun, 01 Dec 2024 00:00:00 +0000</pubDate>
+      <guid>https://doi.org/10.1016/j.bionps.2024.100107</guid>
+      <description>Machine learning approaches for biomarker discovery across the psychosis spectrum, encompassing schizophrenia, schizoaffective disorders, bipolar disorder with psychosis, and clinical high risk for psychosis. Published in Biomarkers in Neuropsychiatry, Elsevier.</description>
     </item>
     
   </channel>
